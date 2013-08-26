@@ -12,6 +12,7 @@
 </head>
 <body>
 <div id="a"></div>
+<div id="historicData"></div>
 <script>
 
 $(function() {
@@ -114,17 +115,12 @@ function buildHistURL(ticker, fromDate, toDate) {
 };
 
 
-var histString = "date,open,high,low,close,adjclose,volume,ticker\n";
+function renderHistoricString(historicString) {
+	var hDiv = document.getElementById('historicData');
+	hDiv.innerHTML = historicString;
+}
 
 function getHistoric() {
-    function buildCSV(data) {
-        js = data.query.results.row;
-        for (var j=1; j<js.length; j++) {
-            line = js[j];
-            lineTransf = line['Date'] + ',' + line.Open + ',' + line.High + ',' + line.Low + ',' + line.Close + ',' + line.AdjClose + ',' + line.Volume + ',' + Ticker + '\n';
-            histString = histString + lineTransf;
-    }}
-
     addTicker();
     var fromDate = document.getElementById('fromDate').value;
     var toDate = document.getElementById('toDate').value;
@@ -138,41 +134,29 @@ function getHistoric() {
     if (fromDate === '' ) { // Default to 1 year from start date
         fromDate = (toDate - 10000).toString();
     };
-    var jxhr = [];
-    var result = [];
-    result.length = currentTickers.length
-    var urls = [];
+    var jxhr = [], result = [], urls = [];
+    var histString = "date,open,high,low,close,adjclose,volume,ticker\n";
     for (var i=0; i<currentTickers.length; i++) {
     	histURL = buildHistURL(currentTickers[i], fromDate, toDate);
     	urls.push(histURL);
     }
     $.each(urls, function(i, url) {
     	jxhr.push($.getJSON(url, function (data) {
-    		console.log(data);
-    		console.log(data.query.results);
     		result[i] = data.query.results; })
     	);
     })
     $.when.apply($, jxhr).done(function() {
-    	console.log('all done');
-    	console.log(result);
-    	console.log(result[0]);
+    	for (var i=0; i<result.length; i++) {
+    		var Ticker = currentTickers[i], tickerData = result[i].row;
+    		for (var j=1; j<tickerData.length; j++) {
+    			line = tickerData[j];
+    			histString += line['Date'] + ',' + line.Open + ',' + line.High + ',' + line.Low + ',' + line.Close + ',' + line.AdjClose + ',' + line.Volume + ',' + Ticker + '\n';
+    		}
+    	renderHistoricString(histString);
+    	}
     });
-    console.log(jxhr);
-    // for (var i=0; i<currentTickers.length; i++) {
-    //     histURL = buildHistURL(Ticker, fromDate, toDate);
-    //     console.log(histURL);
-    //     $.getJSON(histURL,
-    //     function(data) {
-    //         console.log(Ticker);
-    //         console.log(data);
-    //         historicData[Ticker] = data;}
-    //     )
-    // console.log(histString);
-    }
-
-
-
+    
+}
 
 function createCookie(name, value, days) {
     if (days) {
