@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>
+    </title>
+    <style> 
+    .symbol {}
+    </style>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+</head>
+<body>
+<div id="a"></div>
+<script>
+
+$(function() {
+    $( "#fromDate" ).datepicker( { dateFormat: 'yymmdd' }).val();
+    $( "#toDate" ).datepicker( { dateFormat: 'yymmdd' }).val();
+});
+
+var recentTickers = getCookie('recentTickers').split(',');
+var currentTickers = [];
+var historicData = new Object();
+
+var s = getCookie('Searches');
+
+function parseSearches(searches) {
+    searches = searches.split('&');
+    for (var i=0; i<searches.length; i++) {
+        // search = searches[i].split('&');
+        // console.log(search);
+        // tickers = search[0].substr(3, search[0].length);
+        // from = search[1].substr(5, search[0].length);
+        // to = search[2].substr(2, search[2].length);
+        // console.log(tickers, from, to);
+    };
+}
+
+parseSearches(s);
+
+function createURL(tickers) {
+    var baseURL = "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20csv%20where%20url%3D'http%3A%2F%2Fdownload.finance.yahoo.com%2Fd%2Fquotes.csv%3Fs%3D";
+    var paramsURL = "6f%3Dsl1%26e%3D.csv'%20and%20columns%3D'symbol%2Cprice'&format=json&diagnostics=true";//&callback=cbfunc";
+    tickersURL = "";
+    for(var i=0; i<tickers.length; i++) {
+        tickersURL += tickers[i] + "%2C" };
+    tickersURL = tickersURL.substr(0, tickersURL.length-1)
+
+    URL = baseURL + tickersURL + paramsURL;
+    return URL;
+};
+
+$(function() {
+    var availableTags = ["AAPL", "BP", "TLSA", "GOOG", "SCTY", "MSFT", "YHOO"];
+    $( "#tickers" ).autocomplete({
+      source: availableTags
+    });
+  });
+
+function renderRecentQuotes(data) {
+    var div = document.getElementById('quotes');
+    div.innerHTML = '<table>'
+    for (var i=0; i<data.length; i++) {
+        if (data[i].price != 0) { div.innerHTML = div.innerHTML + '<tr><td>' + data[i].symbol + '</td><td style="width:100px"></td><td>' + data[i].price + '</td></tr><br>'; }
+    div.innerHTML += '</table>'
+    }
+}
+
+function deleteDiv(div) {
+    div.parentNode.removeChild(div);
+}
+
+function updateRecentQuotes(url) {
+    $.getJSON(url,
+        function(data) {
+            renderRecentQuotes(data.query.results.row); }
+    ); }
+
+window.setInterval(updateRecentQuotes(createURL(recentTickers)), 10000);
+
+function inArray(array, value) {
+    for (var i=0; i<array.length; i++) {
+        if (array[i] == value) { return true; }
+    }
+    return false;
+}
+
+function addTicker()
+  {
+  var ticker = document.getElementById("tickers").value;
+  if (inArray(currentTickers, ticker) == false && ticker != '') { currentTickers.push(ticker); }
+  if (inArray(recentTickers, ticker) == false && ticker != '') { 
+    recentTickers.push(ticker);
+    cval = getCookie('recentTickers');
+    if (cval == "") { cval = ticker }
+    else { cval = cval + ',' + ticker; }
+    createCookie('recentTickers', cval);
+ }
+  
+  URL = createURL(recentTickers);
+  updateRecentQuotes(URL);
+
+  var div = document.getElementById('currentTickers');
+  div.innerHTML = div.innerHTML + '<div onclick="deleteDiv(this)" id=current' + ticker + ' style="width:60px; background-color: green">' + ticker + ' x </div>';
+  document.getElementById('tickers').value = '';
+  }
+
+function buildHistURL(ticker, fromDate, toDate) {
+    fromDate = fromDate.toString(), toDate = toDate.toString();
+    var fromYear = fromDate.substr(0,4), fromMonth = fromDate.substr(4,2)-1, fromDay = fromDate.substr(6,2)
+    var toYear = toDate.substr(0,4), toMonth = toDate.substr(4,2)-1, toDay = toDate.substr(6,2)
+    return "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20csv%20where%20url%3D'http%3A%2F%2Fichart.finance.yahoo.com%2Ftable.csv%3Fs%3D" + ticker + "%26d%3D" + toMonth + "%26e%3D" + toDay + "%26f%3D" + toYear + "%26g%3Dd%26a%3D" + fromMonth + "%26b%3D" + fromDay + "%26c%3D" + fromYear + "%26ignore%3D.csv'%20and%20columns%3D'Date%2COpen%2CHigh%2CLow%2CClose%2CVolume%2CAdjClose'&format=json&diagnostics=true"
+};
+
+
+var histString = "date,open,high,low,close,adjclose,volume,ticker\n";
+
+function getHistoric() {
+    function buildCSV(data) {
+        js = data.query.results.row;
+        for (var j=1; j<js.length; j++) {
+            line = js[j];
+            lineTransf = line['Date'] + ',' + line.Open + ',' + line.High + ',' + line.Low + ',' + line.Close + ',' + line.AdjClose + ',' + line.Volume + ',' + Ticker + '\n';
+            histString = histString + lineTransf;
+    }}
+
+    addTicker();
+    var fromDate = document.getElementById('fromDate').value;
+    var toDate = document.getElementById('toDate').value;
+    if (toDate === '') { // Default to today
+        var today = new Date();
+        var year = today.getFullYear().toString(), month = (today.getMonth()+1).toString(), day = today.getDate().toString();
+        if (day.length == 1) { today = '0' + today; };
+        if (month.length == 1) { month = '0' + month; };
+        toDate = year + month + day;
+    }
+    if (fromDate === '' ) { // Default to 1 year from start date
+        fromDate = (toDate - 10000).toString();
+    };
+    
+    for (var i=0; i<currentTickers.length; i++) {
+        Ticker = currentTickers[i];
+        console.log(Ticker);
+        console.log(currentTickers);
+        console.log(i);
+        histURL = buildHistURL(Ticker, fromDate, toDate);
+        console.log(histURL);
+        $.getJSON(histURL,
+        function(data) {
+            console.log(Ticker);
+            historicData[Ticker] = data;}
+        )
+    // console.log(histString);
+    }
+}
+
+function createCookie(name, value, days) {
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        var expires = "; expires=" + date.toGMTString();
+    }
+    else var expires = "";
+    document.cookie = name + "=" + value + expires + "; path=/";
+}
+
+function getCookie(c_name) {
+    if (document.cookie.length > 0) {
+        c_start = document.cookie.indexOf(c_name + "=");
+        if (c_start != -1) {
+            c_start = c_start + c_name.length + 1;
+            c_end = document.cookie.indexOf(";", c_start);
+            if (c_end == -1) {
+                c_end = document.cookie.length;
+            }
+            return unescape(document.cookie.substring(c_start, c_end));
+        }
+    }
+    return "";
+}
+
+</script>
+
+<h1 id="myHeader" onclick="getHistoric()" style="background-color:blue">submit</h1>
+<input type="text" width="250px" placeholder='tickers' id="tickers" onkeydown="if (event.keyCode == 13) addTicker()">
+<input type="text" width="250px" placeholder='from' id="fromDate">
+<input type="text" value="" width="250px" placeholder='to' id="toDate">
+<div id="currentTickers"></div>
+<br><div id="quotes"></div>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
