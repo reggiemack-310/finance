@@ -52,7 +52,7 @@ function createURL(tickers) {
 };
 
 $(function() {
-    var availableTags = ["AAPL", "BP", "TLSA", "GOOG", "SCTY", "MSFT", "YHOO"];
+    var availableTags = ["AAPL", "ABC", "BP", "TLSA", "GOOG", "SCTY", "MSFT", "YHOO"];
     $( "#tickers" ).autocomplete({
       source: availableTags
     });
@@ -138,22 +138,41 @@ function getHistoric() {
     if (fromDate === '' ) { // Default to 1 year from start date
         fromDate = (toDate - 10000).toString();
     };
-    
+    var jxhr = [];
+    var result = [];
+    result.length = currentTickers.length
+    var urls = [];
     for (var i=0; i<currentTickers.length; i++) {
-        Ticker = currentTickers[i];
-        console.log(Ticker);
-        console.log(currentTickers);
-        console.log(i);
-        histURL = buildHistURL(Ticker, fromDate, toDate);
-        console.log(histURL);
-        $.getJSON(histURL,
-        function(data) {
-            console.log(Ticker);
-            historicData[Ticker] = data;}
-        )
+    	histURL = buildHistURL(currentTickers[i], fromDate, toDate);
+    	urls.push(histURL);
+    }
+    $.each(urls, function(i, url) {
+    	jxhr.push($.getJSON(url, function (data) {
+    		console.log(data);
+    		console.log(data.query.results);
+    		result[i] = data.query.results; })
+    	);
+    })
+    $.when.apply($, jxhr).done(function() {
+    	console.log('all done');
+    	console.log(result);
+    	console.log(result[0]);
+    });
+    console.log(jxhr);
+    // for (var i=0; i<currentTickers.length; i++) {
+    //     histURL = buildHistURL(Ticker, fromDate, toDate);
+    //     console.log(histURL);
+    //     $.getJSON(histURL,
+    //     function(data) {
+    //         console.log(Ticker);
+    //         console.log(data);
+    //         historicData[Ticker] = data;}
+    //     )
     // console.log(histString);
     }
-}
+
+
+
 
 function createCookie(name, value, days) {
     if (days) {
