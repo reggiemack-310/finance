@@ -6,9 +6,19 @@
     <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
     <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
     <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
-
+    <style>
+    	.changeUp {color: green; display: inline-block; font-size: 10px; width:50px;}
+    	.changeDown {color: red; display: inline-block; font-size: 10px; width:50px;}
+    	.selected {color: blue;}
+    	.notSelected {color: #98abc5;}
+    	.button {margin: 5px 5px 5px 5px; border:2px solid; border-radius:5px; background-color:#98abc5; color: white; height: 25px; display: inline-block; border: #BBB solid 1px; width: 218px; text-align: center;}
+    	.quote {display: inline-block; font-size: 10px; width:50px;}
+    	.tickers {margin: 2px 0px 0px 2px; font-size: 10px; text-align: center; color: white; width:50px; background-color: #98abc5; display: inline-block; border-radius:3px;}
+    	#search {font-size: 10px; text-decoration: underline; color:blue; }
+    	#download {font-size: 10px; text-decoration: underline; color:blue; }
+    </style>
     <meta http-equiv="content-type" content="text/html; charset=UTF8">
-    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="css/dc.css"/>
     <link href='highlighter/shCore.css' rel='stylesheet' type='text/css'/>
     <link href='highlighter/shThemeDefault.css' rel='stylesheet' type='text/css'/>
@@ -21,10 +31,108 @@
 	<script src='highlighter/shBrushXml.js' type='text/javascript'></script>
 </head>
 <body>
+	<i class="icon-search"></i>
+<div class="row">
+	<div class="span4">
+		Search<br>
+		<div id="myHeader" onclick="addTicker(); getHistoric(document.getElementById('fromDate').value, document.getElementById('toDate').value, currentTickers, frequency)" class="button">submit</div>
+		<input style="margin-left: 5px;" type="text" class="input-large" placeholder='tickers' id="tickers" onkeydown="if (event.keyCode == 13) addTicker()"><br>
+		<input style="margin-left: 5px;" type="text" class="input-small" placeholder='from' id="fromDate">
+		<input style="margin-left: 5px;" type="text" class="input-small" placeholder='to' id="toDate"><br><br>
+		<div id="currentTickers"></div>
+		<div id="download" onclick="downloadJSON2CSV(data)"></div>
+	</div>
+	<div class="span1" style="margin-left: -50px;">
+		<div id="dailyFreq" onclick="updateFrequency(this.id)" class="selected">Daily</div>
+		<div id="weeklyFreq" onclick="updateFrequency(this.id)" class="notSelected">Weekly</div>
+		<div id="monthlyFreq" onclick="updateFrequency(this.id)" class="notSelected">Monthly</div>
+	</div>
+	<div class="span4" style="width:300px; height:200px; overflow:auto;">
+		Recent Searches
+		<div id="searches"></div>
+	</div>
+	<div class="span3" style="width:200px; height:200px; overflow:auto;">
+		Recent Quotes
+		<div id="quotes"></div>
+	</div>
+	<div class="span3" style="width:200px; height:200px; overflow:auto;">
+		Markets
+		<div id="quotes"></div>
+	</div>
+</div>
+
+<div class="row">
+	<div class="span2">
+		<div id="fluctuation-chart">
+			<a href="javascript:dc.filterAll(); dc.renderAll();">Reset Fiters</a>
+	        <span class="reset" style="display: none;">range: <span class="filter"></span></span>
+	        <a class="reset" href="javascript:fluctuationChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	        <div class="clearfix"></div>
+	    </div>
+		<div id="tickers-chart">
+	        <span class="reset" style="display: none;">range: <span class="filter"></span></span>
+	        <a class="reset" href="javascript:tickersChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	        <div class="clearfix"></div>
+	    </div>
+    	<div id="gain-loss-chart">
+	        <a class="reset" href="javascript:gainOrLossChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	        <div class="clearfix"></div>
+    	</div>
+	    <div id="quarter-chart">
+	        <a class="reset" href="javascript:quarterChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	        <div class="clearfix"></div>
+	    </div>
+	    <div id="day-of-week-chart">
+	        <a class="reset" href="javascript:dayOfWeekChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	        <div class="clearfix"></div>
+	    </div>
+	</div>
+	<div class="span8">
+		<div id="price-chart">
+	        <span class="reset" style="display: none;">range: <span class="filter"></span></span>
+	        <a class="reset" href="javascript:priceChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	        <div class="clearfix"></div>
+	    </div>
+		<div id="Volume-chart">
+	        <span class="reset" style="display: none;">range: <span class="filter"></span></span>
+	        <a class="reset" href="javascript:VolumeChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	        <div class="clearfix"></div>
+	    </div>
+    	<div id="yearly-bubble-chart" class="dc-chart">
+        	<a class="reset" href="javascript:yearlyBubbleChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+        	<div class="clearfix"></div>
+    	</div>
+	</div>
+</div>
+
+<div class="row">
+    <div>
+        <div class="dc-data-count">
+            <span class="filter-count"></span> selected out of <span class="total-count"></span> records | 
+        </div>
+    </div>
+    <table class="table table-hover dc-data-table" style="width: 750px; margin-left: 150px">
+        <thead><tr class="header">
+            <th id="c1"></th>
+            <th id="c2"></th>
+            <th id="c3"></th>
+            <th id="c4"></th>
+            <th id="c5"></th>
+            <th id="c6"></th>
+            <th id="c7"></th>
+            <th id="c8"></th>
+        </tr></thead>
+    </table>
+</div>
+
+<div id="lists">
+	<div id="flight-list" class="list"></div>
+</div>
 
 <script>
 
-$(function() {
+$(function() { // calendar popups
+	var jq = $.noConflict();
     $( "#fromDate" ).datepicker( { dateFormat: 'yymmdd' }).val();
     $( "#toDate" ).datepicker( { dateFormat: 'yymmdd' }).val();
 });
@@ -32,27 +140,17 @@ $(function() {
 var recentTickers = getCookie('recentTickers').split(',');
 var currentTickers = [];
 var historicData = new Object();
+var frequency = 'd';
+updateFrequency('dailyFreq');
 d3.selectAll("#version").text(dc.version);
+URL = createURL(recentTickers);
+updateRecentQuotes(URL);
+populateSearches();
 
-var s = getCookie('Searches');
-
-function parseSearches(searches) {
-    searches = searches.split('&');
-    for (var i=0; i<searches.length; i++) {
-        // search = searches[i].split('&');
-        // console.log(search);
-        // tickers = search[0].substr(3, search[0].length);
-        // from = search[1].substr(5, search[0].length);
-        // to = search[2].substr(2, search[2].length);
-        // console.log(tickers, from, to);
-    };
-}
-
-parseSearches(s);
 
 function createURL(tickers) {
     var baseURL = "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20csv%20where%20url%3D'http%3A%2F%2Fdownload.finance.yahoo.com%2Fd%2Fquotes.csv%3Fs%3D";
-    var paramsURL = "6f%3Dsl1p2%26e%3D.csv'%20and%20columns%3D'symbol%2Cprice%2Cchange'&format=json&diagnostics=true";//&callback=cbfunc";
+    var paramsURL = "6f%3Dsl1p2%26e%3D.csv'%20and%20columns%3D'symbol%2Cprice%2Cchange'&format=json&diagnostics=true";
     tickersURL = "";
     for(var i=0; i<tickers.length; i++) {
         tickersURL += tickers[i] + "%2C" };
@@ -63,7 +161,7 @@ function createURL(tickers) {
 };
 
 $(function() {
-    var availableTags = ["AAPL", "ABC", "BP", "TLSA", "GOOG", "SCTY", "MSFT", "YHOO"];
+    var availableTags = [];
     $( "#tickers" ).autocomplete({
       source: availableTags
     });
@@ -74,11 +172,10 @@ function renderRecentQuotes(data) {
     div.innerHTML = '';
     for (var i=0; i<data.length; i++) {
     	var pchange = data[i].change.substr(0, data[i].change.length-1);
-    	var pchangeStyle = "";
+    	var pchangeStyle = "quote";
     	if (pchange>0) { pchangeStyle = 'changeUp' };
     	if (pchange<0) { pchangeStyle = 'changeDown' }
-    	console.log(pchange)==0;
-        if (data[i].price != 0) { div.innerHTML = div.innerHTML + '<div style="display: inline; text-align: center">' + data[i].symbol + '</div><div style="sdisplay: inline; text-align: center">' + data[i].price + '</div><div style="display: inline; text-align: center;">' + data[i].change + '</div><br>'; }
+        if (data[i].price != 0) { div.innerHTML = div.innerHTML + '<div class="quote">' + data[i].symbol + '</div><div class="quote">' + data[i].price + '</div><div class="' + pchangeStyle + '";>' + data[i].change + '</div><br>'; }
     }
 }
 
@@ -92,14 +189,26 @@ function updateRecentQuotes(url) {
             renderRecentQuotes(data.query.results.row); }
     ); }
 
-window.setInterval(updateRecentQuotes(createURL(recentTickers)), 10000);
-
 function inArray(array, value) {
     for (var i=0; i<array.length; i++) {
         if (array[i] == value) { return true; }
     }
     return false;
 }
+
+function downloadJSON2CSV(objArray) {
+	var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+	var str = 'Date,Open,High,Low,Close,AdjClose,PriorAdjClose,Volume,Ticker\n';
+
+	for (var i=0; i<array.length; i++) {
+		var line = '', ln = array[i]
+		line += ln.date+','+ln.open+','+ln.high+','+ln.low+','+ln.close+','+ln.adjclose+','+ln.priorClose+','+ln.volume+','+ln.ticker;
+		
+		line.slice(0,line.Length-1); 
+            str += line + '\r\n';
+        }
+        window.open( "data:text/csv;charset=utf-8," + escape(str))
+    }
 
 function addTicker()
   {
@@ -113,19 +222,18 @@ function addTicker()
     createCookie('recentTickers', cval);
  }
   
-  URL = createURL(recentTickers);
-  updateRecentQuotes(URL);
-
   var div = document.getElementById('currentTickers');
-  div.innerHTML = div.innerHTML + '<div onclick="deleteDiv(this)" id=current' + ticker + ' style="margin-right: 10px; width:60px; background-color: #98abc5; display: inline">' + ticker + ' x </div>';
+  div.innerHTML = div.innerHTML + '<div onclick="deleteDiv(this)" id=current' + ticker + ' class="tickers">' + ticker + '</div>';
   document.getElementById('tickers').value = '';
   }
+
+
 
 function buildHistURL(ticker, fromDate, toDate) {
     fromDate = fromDate.toString(), toDate = toDate.toString();
     var fromYear = fromDate.substr(0,4), fromMonth = fromDate.substr(4,2)-1, fromDay = fromDate.substr(6,2)
     var toYear = toDate.substr(0,4), toMonth = toDate.substr(4,2)-1, toDay = toDate.substr(6,2)
-    return "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20csv%20where%20url%3D'http%3A%2F%2Fichart.finance.yahoo.com%2Ftable.csv%3Fs%3D" + ticker + "%26d%3D" + toMonth + "%26e%3D" + toDay + "%26f%3D" + toYear + "%26g%3Dd%26a%3D" + fromMonth + "%26b%3D" + fromDay + "%26c%3D" + fromYear + "%26ignore%3D.csv'%20and%20columns%3D'Date%2COpen%2CHigh%2CLow%2CClose%2CVolume%2CAdjClose'&format=json&diagnostics=true"
+    return "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20csv%20where%20url%3D'http%3A%2F%2Fichart.finance.yahoo.com%2Ftable.csv%3Fs%3D" + ticker + "%26d%3D" + toMonth + "%26e%3D" + toDay + "%26f%3D" + toYear + "%26g%3D"+frequency+"%26a%3D" + fromMonth + "%26b%3D" + fromDay + "%26c%3D" + fromYear + "%26ignore%3D.csv'%20and%20columns%3D'Date%2COpen%2CHigh%2CLow%2CClose%2CVolume%2CAdjClose'&format=json&diagnostics=true"
 };
 
 
@@ -134,46 +242,7 @@ function renderHistoricString(historicString) {
 	hDiv.innerHTML = historicString;
 }
 
-function getHistoric() {
-    addTicker();
-    var fromDate = document.getElementById('fromDate').value;
-    var toDate = document.getElementById('toDate').value;
-    if (toDate === '') { // Default to today
-        var today = new Date();
-        var year = today.getFullYear().toString(), month = (today.getMonth()+1).toString(), day = today.getDate().toString();
-        if (day.length == 1) { today = '0' + today; };
-        if (month.length == 1) { month = '0' + month; };
-        toDate = year + month + day;
-    }
-    if (fromDate === '' ) { // Default to 1 year from start date
-        fromDate = (toDate - 10000).toString();
-    };
-    var jxhr = [], result = [], urls = [];
-    var consolData = [];
-    for (var i=0; i<currentTickers.length; i++) {
-    	histURL = buildHistURL(currentTickers[i], fromDate, toDate);
-    	urls.push(histURL);
-    }
-    $.each(urls, function(i, url) {
-    	jxhr.push($.getJSON(url, function (data) {
-    		result[i] = data.query.results; })
-    	);
-    })
-    $.when.apply($, jxhr).done(function() {
-    	for (var i=0; i<result.length; i++) {
-    		var Ticker = currentTickers[i], tickerData = result[i].row;
-    		for (var j=1; j<tickerData.length; j++) {
-    			line = tickerData[j];
-    			var newLine = new Object();
-    			newLine.date = line['Date'], newLine.open = line.Open, newLine.high = line.High, newLine.low = line.Low, newLine.close = line.Close, newLine.volume = line.Volume, newLine. adjclose = line.AdjClose, newLine.ticker = Ticker
-    			consolData.push(newLine);
-    		}
-    	}
-    	myJson = consolData;
-    	data = JSON.parse(JSON.stringify(myJson));
-    	draw(data);
-    });
-}
+var freqConv = {'d': 'daily', 'w': 'weekly', 'm': 'monthly'};
 
 function createCookie(name, value, days) {
     if (days) {
@@ -200,93 +269,100 @@ function getCookie(c_name) {
     return "";
 }
 
+function populateSearches() {
+	searches = getCookie('Searches').split('-');
+	searchHTML = document.getElementById('searches').innerHTML;
+	for (var i=0; i<searches.length; i++) {
+		searchHTML += '<div onclick="parseSearch(this)" id="search">' + searches[i] + '</div>';
+	}
+	document.getElementById('searches').innerHTML = searchHTML;
+
+};
+
+function parseSearch(div) {
+	var params = div.innerHTML.split(' ');
+	var tickers = params[0].split(',');
+	var frequency = params[params.length-1];
+	var fromDate = '', toDate = '';
+	for (var i=1; i<params.length-1; i++) {
+		if (params[i].substr(0,4)=='from') {
+			fromDate = params[i].substr(5, params[i].length);
+		}
+		if (params[i].substr(0,2)=='to') {
+			toDate = params[i].substr(3, params[i].length);
+		}
+	}
+	getHistoric(fromDate, toDate, tickers, frequency);
+}
+
+function setSearchCookie(fromDate, toDate) {
+	search = currentTickers.toString();
+	if (fromDate!='') { search += ' from=' + fromDate.toString() };
+	if (toDate!='') { search += ' to=' + toDate.toString() };
+	search += ' frequency=' + freqConv[frequency];
+	searches = getCookie('Searches');
+	searches = search + '-' + searches;
+	createCookie('Searches', searches);
+}
+
+function getHistoric(fromDate, toDate, currentTickers, frequency) {
+   console.log(fromDate);
+   console.log(toDate);
+   console.log(currentTickers);
+   console.log(frequency);
+    setSearchCookie(fromDate, toDate);
+    if (toDate === '') { // Default to today
+        var today = new Date();
+        var year = today.getFullYear().toString(), month = (today.getMonth()+1).toString(), day = today.getDate().toString();
+        if (day.length == 1) { today = '0' + today; };
+        if (month.length == 1) { month = '0' + month; };
+        toDate = year + month + day; }
+
+    if (fromDate === '' ) { // Default to 1 year from start date
+        fromDate = (toDate - 10000).toString(); }
+    
+    var jxhr = [], result = [], urls = [], consolData = [];
+    for (var i=0; i<currentTickers.length; i++) {
+    	histURL = buildHistURL(currentTickers[i], fromDate, toDate);
+    	urls.push(histURL);
+    }
+    $.each(urls, function(i, url) {
+    	jxhr.push($.getJSON(url, function (data) {
+    		result[i] = data.query.results; })
+    	); })
+
+    $.when.apply($, jxhr).done(function() {
+    	for (var i=0; i<result.length; i++) {
+    		var Ticker = currentTickers[i], tickerData = result[i].row;
+    		for (var j=1; j<tickerData.length; j++) {
+    			line = tickerData[j];
+    			var newLine = new Object();
+    			newLine.date = line['Date'], newLine.open = line.Open, newLine.high = line.High, newLine.low = line.Low, newLine.close = line.Close, newLine.volume = line.Volume, newLine. adjclose = line.AdjClose, newLine.ticker = Ticker
+    			consolData.push(newLine);
+    		}
+    	}
+    	myJson = consolData;
+    	data = JSON.parse(JSON.stringify(myJson));
+    	draw(data);
+    	document.getElementById('download').innerHTML = 'csv';
+    	var tableHeaders = ['Date','Ticker','Open','High','Low','Close','Adj Close','Volume']
+    	var tableIDs = ['c1','c2','c3','c4','c5','c6','c7','c8']
+    	for (var i=0; i<tableHeaders.length; i++) {
+    		document.getElementById(tableIDs[i]).innerHTML = tableHeaders[i];
+    	}
+
+    });
+}
+
+function updateFrequency(divID) {
+	document.getElementById('dailyFreq').className = "notSelected";
+	document.getElementById('weeklyFreq').className = "notSelected";
+	document.getElementById('monthlyFreq').className = "notSelected";
+	document.getElementById(divID).className = "selected";
+	frequency = divID.substr(0, 1);
+}
+
 </script>
-<br>
-<div class="row">
-
-</div>
-
-
-<div class="container">
-
-<div class="row">
-	<div class="span2">
-		<div id="fluctuation-chart">
-	        <span class="reset" style="display: none;">range: <span class="filter"></span></span>
-	        <a class="reset" href="javascript:fluctuationChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-	        <div class="clearfix"></div>
-	    </div>
-		<div id="tickers-chart">
-	        <span class="reset" style="display: none;">range: <span class="filter"></span></span>
-	        <a class="reset" href="javascript:tickersChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-	        <div class="clearfix"></div>
-	    </div>
-    	<div id="gain-loss-chart">
-	        <a class="reset" href="javascript:gainOrLossChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-	        <div class="clearfix"></div>
-    	</div>
-	    <div id="quarter-chart">
-	        <a class="reset" href="javascript:quarterChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-	        <div class="clearfix"></div>
-	    </div>
-	    <div id="day-of-week-chart">
-	        <a class="reset" href="javascript:dayOfWeekChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-	        <div class="clearfix"></div>
-	    </div>
-	</div>
-	<div class="span8">
-		<div id="myHeader" onclick="getHistoric()" style="width: 200px; height: 30px; color: white; background-color:#98abc5; text-align: left; margin-left:50px; display: inline;">submit</div>
-			<input type="text" style="display: inline; margin-left: 50px" class="input-small" width="250px" placeholder='tickers' id="tickers" onkeydown="if (event.keyCode == 13) addTicker()">
-			<input type="text" style="display: inline;" class="input-small" width="250px" placeholder='from' id="fromDate">
-			<input type="text" style="display: inline;" class="input-small" value="" width="250px" placeholder='to' id="toDate">
-			<div id="currentTickers"></div>
-		<div id="price-chart">
-	        <span class="reset" style="display: none;">range: <span class="filter"></span></span>
-	        <a class="reset" href="javascript:priceChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-	        <div class="clearfix"></div>
-	    </div>
-		<div id="Volume-chart">
-	        <span class="reset" style="display: none;">range: <span class="filter"></span></span>
-	        <a class="reset" href="javascript:VolumeChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-	        <div class="clearfix"></div>
-	    </div>
-    	<div id="yearly-bubble-chart" class="dc-chart">
-        	<a class="reset" href="javascript:yearlyBubbleChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-        	<div class="clearfix"></div>
-    	</div>
-	</div>
-	<div class="span2">
-		Recent Quotes
-		<div id="quotes"></div>
-	</div>
-</div>
-
-
-<div class="row">
-    <div>
-        <div class="dc-data-count">
-            <span class="filter-count"></span> selected out of <span class="total-count"></span> records | <a
-                href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
-        </div>
-    </div>
-
-    <table class="table table-hover dc-data-table" style="width: 750px; margin-left: 150px">
-        <thead><tr class="header">
-            <th id="c1">Date</th>
-            <th id="c2">Ticker</th>
-            <th id="c3">Open</th>
-            <th id="c4">High</th>
-            <th id="c5">Low</th>
-            <th id="c6">Close</th>
-            <th id="c7">Adj Close</th>
-            <th id="c8">Volume</th>
-        </tr></thead>
-    </table>
-</div>
-
-<div id="lists"><div id="flight-list" class="list"></div></div>
-
-</div>
 
 <script type="text/javascript">
 
@@ -479,8 +555,8 @@ function draw(data) {
                     .title(function (p) {
                         return p.key.getFullYear()
                                 + "\n"
-                                + "Index Gain: " + numberFormat(p.value.absGain) + "\n"
-                                + "Index Gain in Percentage: " + numberFormat(p.value.percentageGain) + "%\n"
+                                + "change: " + numberFormat(p.value.absGain) + "\n"
+                                + "% change : " + numberFormat(p.value.percentageGain) + "%\n"
                                 + "Fluctuation / Index Ratio: " + numberFormat(p.value.fluctuationPercentage) + "%";
                     })
                     .yAxis().tickFormat(function (v) { return v + "%"; });
@@ -552,8 +628,9 @@ function draw(data) {
                     
             dc.dataTable(".dc-data-table")
                     .dimension(dateDimension)
-                    .group(function (d) { var format = d3.format("02d");
-                        return d.dd.getFullYear() + "/" + format((d.dd.getMonth() + 1)); })
+                    .group(function(d) { return d.ticker })
+                    // .group(function (d) { var format = d3.format("02d");
+                        // return d.dd.getFullYear() + "/" + format((d.dd.getMonth() + 1)); })
                     .size(100)
                     .columns([
                         function (d) { return d.date; },
@@ -621,7 +698,7 @@ function draw(data) {
                 .height(350)
                 .transitionDuration(1000)
                 .margins({top: 30, right: 50, bottom: 25, left: 100})
-                .dimension('blah')
+                .dimension(dateDimension)
                 .group(prices)
                 .valueAccessor(function (d) {
                     return d.value.ticker; })
@@ -651,7 +728,7 @@ function draw(data) {
                     .height(125)
                     .transitionDuration(1000)
                     .margins({top: 30, right: 50, bottom: 25, left: 100})
-                    .dimension('blah')
+                    .dimension(dateDimension)
                     .group(volumes)
                     .valueAccessor(function (d) {
                         return d.value.ticker; })
