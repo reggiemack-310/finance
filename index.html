@@ -9,8 +9,8 @@
     <style>
     	.changeUp {color: green; display: inline-block; font-size: 10px; width:50px;}
     	.changeDown {color: red; display: inline-block; font-size: 10px; width:50px;}
-    	.selected {color: blue; display: inline-block; margin-left: 15px; cursor: pointer; cursor: hand; }
-    	.notSelected {color: #98abc5; display: inline-block; margin-left: 15px; cursor: pointer; cursor: hand; }
+    	.selected {color: blue; display: inline-block; margin-left: 20px; cursor: pointer; cursor: hand; }
+    	.notSelected {color: #98abc5; display: inline-block; margin-left: 20px; cursor: pointer; cursor: hand; }
     	.button {margin: 15px 5px 5px 5px; border:2px solid; border-radius:5px; background-color:#98abc5; color: white; height: 25px; display: inline-block; border: #BBB solid 1px; width: 210px; text-align: center; cursor: pointer; cursor: hand; font-size: 18px; }
     	.quote {display: inline-block; font-size: 10px; width:50px; }
     	.TBVtickers {margin: 2px 0px 0px 2px; font-size: 10px; text-align: center; color: white; width:50px; background-color: lightGray; display: inline-block; border-radius:3px; cursor: pointer; cursor: hand; }
@@ -29,13 +29,14 @@
     <script type="text/javascript" src="js/d3.js" charset="utf-8"></script>
 	<script type="text/javascript" src="js/crossfilter.js"></script>
 	<script type="text/javascript" src="js/dc.js"></script>
+	<script type="text/javascript" src="js/vinfin.js"></script>
+	<script type="text/javascript" src="js/vinfinchart.js"></script>
 	<script src='highlighter/shCore.js' type='text/javascript'></script>
 	<script src="highlighter/shAutoloader.js" type="text/javascript"></script>
 	<script src='highlighter/shBrushJScript.js' type='text/javascript'></script>
 	<script src='highlighter/shBrushXml.js' type='text/javascript'></script>
 </head>
 <body>
-
 <div class="container-fluid">
 	<div class="span3">
 		<div onclick="addTicker(document.getElementById('tickers').value, getRecentTickers()); getHistoric(document.getElementById('fromDate').value, document.getElementById('toDate').value, currentTickers, frequency, getRecentTickers())" class="button">search</div>
@@ -44,16 +45,18 @@
 		<input type="text" class="dates" style="margin-left: 1px;" placeholder='to' id="toDate">
 		<div onclick="updateFrequency(this.id);" id="dailyFreq" >daily</div>
 		<div onclick="updateFrequency(this.id);" id="weeklyFreq" >weekly</div>
-		<div onclick="updateFrequency(this.id);" id="monthlyFreq">monthly</div>
+		<div onclick="updateFrequency(this.id);" id="monthlyFreq">monthly</div><br><br>
 		<div id="currentTickers"></div>
 		<div id="download" onclick="javascript:downloadJSON2CSV(data)"></div>
 		<div id="clear" onclick="javascript:Clear()" style="margin-top: -5px"></div><br><br>
-		<div style="text-align:center">
-			search history
+			<div id="searchTitle"><div style="text-align:center">
+				search history
+			</div>
 		</div>
 			<div id="searches" class="scroller"></div><br>
-		<div style="text-align:center">
+		<div id="quoteTitle"><div style="text-align:center">
 			recent quotes
+		</div>
 		</div>
 		<div class="scroller">
 			<div id="quotes" style="height:200px"></div>
@@ -141,29 +144,27 @@ $(function() { // calendar popups
 });
 
 // function initialize() {
-var recentTickers = getCookie('recentTickers').split(',');
-recentTickers.length = 40;
+var recentTickers = getCookie('recentTickers');
+recentTickers.length = Math.min(recentTickers.length, 40);
+
+if (recentTickers.length > 0) {
+	recentTickers = recentTickers.split();
+	updateRecentQuotes(createURL(recentTickers));
+}
+else { 
+	document.getElementById('quoteTitle').innerHTML = ''; 
+	recentTickers = [];
+}
+
 var currentTickers = [];
 var historicData = new Object();
 var frequency = 'd';
-	var recordNumber = 100;
-	updateFrequency('dailyFreq');
-	var cData = [];
-	d3.selectAll("#version").text(dc.version);
-	updateRecentQuotes(createURL(recentTickers));
+var recordNumber = 100;
+updateFrequency('dailyFreq');
+var cData = [];
+d3.selectAll("#version").text(dc.version);
+
 populateSearches();
-
-function createURL(tickers) {
-    var baseURL = "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20csv%20where%20url%3D'http%3A%2F%2Fdownload.finance.yahoo.com%2Fd%2Fquotes.csv%3Fs%3D";
-    var paramsURL = "6f%3Dsl1p2%26e%3D.csv'%20and%20columns%3D'symbol%2Cprice%2Cchange'&format=json&diagnostics=true";
-    tickersURL = "";
-    for(var i=0; i<tickers.length; i++) {
-        tickersURL += tickers[i] + "%2C" };
-    tickersURL = tickersURL.substr(0, tickersURL.length-1)
-
-    URL = baseURL + tickersURL + paramsURL;
-    return URL;
-};
 
 $(function() {
     var availableTags = ['A', 'AA', 'AAP', 'AAPL', 'AAT', 'AAWW', 'AB', 'ABB', 'ABBV', 'ABC', 'ABCO', 'ABG', 'ABM', 'ABT', 'ABV', 'ABX', 'ACAD', 'ACC', 'ACE', 'ACG', 'ACGL', 'ACH', 'ACHC', 'ACM', 'ACMP', 'ACN', 'ACO', 'ACOR', 'ACTG', 'ACXM', 'ADBE', 'ADM', 'ADP', 'ADS', 'ADT', 'ADX', 'AEB', 'AED', 'AEE', 'AEF', 'AEG', 'AEGR', 'AEK', 'AEL', 'AEM', 'AEO', 'AEP', 'AER', 'AES', 'AET', 'AEV', 'AF', 'AFA', 'AFG', 'AFL', 'AFM', 'AFQ', 'AFSD', 'AFSI', 'AFW', 'AG', 'AGCO', 'AGII', 'AGNC', 'AGNCP', 'AGO', 'AGU', 'AHGP', 'AHL', 'AIG', 'AIG', 'AIN', 'AINV', 'AIRM', 'AIT', 'AIV', 'AIXG', 'AJG', 'AKAM', 'AKR', 'AL', 'ALB', 'ALEX', 'ALGT', 'ALKS', 'ALL', 'ALNY', 'ALR', 'ALSN', 'ALTR', 'ALU', 'ALXN', 'AMAT', 'AMCX', 'AMD', 'AMG', 'AMGN', 'AMP', 'AMRN', 'AMSG', 'AMT', 'AMTD', 'ANAT', 'ANF', 'ANN', 'ANR', 'AOL', 'AON', 'AOS', 'APA', 'APC', 'APD', 'APH', 'APL', 'APO', 'APU', 'ARB', 'ARCP', 'ARE', 'ARIA', 'ARLP', 'ARMH', 'ARNA', 'ARP', 'ARW', 'ASBC', 'ASCMA', 'ASH', 'ASMI', 'ASML', 'ASNA', 'ASPS', 'ASR', 'ASX', 'ATE', 'ATI', 'ATK', 'ATML', 'ATO', 'ATU', 'ATVI', 'AU', 'AUO', 'AUQ', 'AUY', 'AV', 'AVA', 'AVB', 'AVG', 'AVGO', 'AVV', 'AVX', 'AVY', 'AWC', 'AWF', 'AWH', 'AWI', 'AWK', 'AWR', 'AXE', 'AXL', 'AXLL', 'AXP', 'AXS', 'AYI', 'AYR', 'AZN', 'BA', 'BAC', 'BAC', 'A', 'BAC', 'BAH', 'BAK', 'BAM', 'BAP', 'BAX', 'BBBY', 'BBD', 'BBDO', 'BBEP', 'BBG', 'BBL', 'BBRY', 'BBT', 'BBVA', 'BC', 'BCA', 'BCEI', 'BCH', 'BCO', 'BCPC', 'BCS', 'BDC', 'BDN', 'BEAM', 'BECN', 'BEE', 'BEN', 'BERY', 'BFAM', 'BG', 'BGC', 'BHE', 'BHI', 'BHP', 'BID', 'BIIB', 'BIN', 'BIO', 'BIP', 'BK', 'BKD', 'BKH', 'BKI', 'BKW', 'BLC', 'BLL', 'BLOX', 'BMA', 'BMO', 'BMR', 'BMRN', 'BMY', 'BNS', 'BOH', 'BOKF', 'BOXC', 'BP', 'BPL', 'BPO', 'BPT', 'BR', 'BRC', 'BRCD', 'BRCM', 'BRFS', 'BRKR', 'BRP', 'BRS', 'BRY', 'BSAC', 'BSBR', 'BSMX', 'BSX', 'BT', 'BTE', 'BTI', 'BTU', 'BUD', 'BVN', 'BWA', 'BWC', 'BWLD', 'BWP', 'BX', 'BXP', 'BYD', 'BYI', 'A', 'CA', 'CAB', 'CACC', 'CACI', 'CAE', 'CAKE', 'CAM', 'CAR', 'CASY', 'CATY', 'CB', 'CBD', 'CBF', 'CBG', 'CBI', 'CBL', 'CBRL', 'CBS', 'CBSH', 'CBST', 'CBT', 'CBU', 'CCE', 'CCH', 'CCI', 'CCJ', 'CCL', 'CCO', 'CCOI', 'CCU', 'CCV', 'CDNS', 'CE', 'CEA', 'CEB', 'CEF', 'CELG', 'CEO', 'CERN', 'CF', 'CFFN', 'CFN', 'CFR', 'CFX', 'CG', 'CGG', 'CGNX', 'CHA', 'CHD', 'CHE', 'CHH', 'CHK', 'CHKP', 'CHL', 'CHMT', 'CHRW', 'CHSP', 'CHT', 'CHTR', 'CHU', 'CI', 'CIB', 'CIE', 'CIEN', 'CIG', 'CIM', 'CINF', 'CIR', 'CIT', 'CJES', 'CKH', 'CL', 'CLB', 'CLC', 'CLDX', 'CLF', 'CLI', 'CLMT', 'CLNE', 'CLP', 'CLR', 'CLW', 'CLX', 'CM', 'CMA', 'CMA', 'CMC', 'CMCSA', 'CMCSK', 'CME', 'CMG', 'CMI', 'CMLP', 'CMN', 'CMO', 'CMP', 'CMRE', 'CMS', 'CNA', 'CNC', 'CNCO', 'CNH', 'CNI', 'CNK', 'CNL', 'CNO', 'CNP', 'CNQ', 'CNQR', 'CNS', 'CNX', 'COF', 'COF', 'COG', 'COLB', 'COLM', 'COP', 'COST', 'COV', 'CP', 'CPAC', 'CPB', 'CPHD', 'CPL', 'CPN', 'CPT', 'CPWR', 'CQP', 'CR', 'CRH', 'CRL', 'CRM', 'CRS', 'CRWN', 'CRZO', 'CS', 'CSC', 'CSE', 'CSH', 'CSL', 'CSOD', 'CSRE', 'CSTE', 'CSX', 'CTAS', 'CTB', 'CTRP', 'CTRX', 'CTSH', 'CUB', 'CUBE', 'CUK', 'CUZ', 'CVA', 'CVBF', 'CVC', 'CVD', 'CVE', 'CVG', 'CVI', 'CVLT', 'CVS', 'CVX', 'CW', 'CWH', 'CWHN', 'CWHO', 'CXO', 'CXW', 'CY', 'CYH', 'CYN', 'CYOU', 'CYT', 'CZR', 'CZZ', 'D', 'DAN', 'DAR', 'DB', 'DCI', 'DCT', 'DD', 'DDD', 'DDR', 'DE', 'DECK', 'DEG', 'DELL', 'DEO', 'DF', 'DFS', 'DFT', 'DG', 'DGX', 'DHR', 'DIOD', 'DIS', 'DISCA', 'DISCB', 'DISCK', 'DISH', 'DK', 'DKS', 'DLB', 'DLPH', 'DLR', 'DLX', 'DNB', 'DNKN', 'DNP', 'DNR', 'DO', 'DOLE', 'DOV', 'DOW', 'DOX', 'DPM', 'DPS', 'DPZ', 'DRC', 'DRE', 'DRH', 'DRI', 'DRU', 'DSW', 'DTE', 'DTV', 'DUK', 'DUKH', 'DV', 'DVA', 'DVN', 'DWA', 'DYN', 'DYN', 'E', 'EA', 'EAT', 'EBAY', 'EBR', 'EC', 'ECA', 'ECL', 'ECPG', 'ED', 'EDMC', 'EDR', 'EDU', 'EE', 'EEFT', 'EEQ', 'EFII', 'EGN', 'EGO', 'EGOV', 'EGP', 'EIX', 'EL', 'ELP', 'ELS', 'EMC', 'EMN', 'EMN', 'EMR', 'ENB', 'ENDP', 'ENH', 'ENI', 'ENL', 'ENR', 'ENS', 'EOC', 'EPB', 'EPD', 'EPR', 'EQM', 'EQR', 'EQT', 'ERF', 'ERIC', 'ERIE', 'ERJ', 'ESC', 'ESGR', 'ESL', 'ESLT', 'ESRX', 'ESS', 'ESV', 'ETE', 'ETFC', 'ETN', 'ETP', 'ETR', 'ETW', 'ETY', 'EV', 'EVAC', 'EVEP', 'EVER', 'EVR', 'EVV', 'EW', 'EWBC', 'EXC', 'EXH', 'EXLP', 'EXP', 'EXPD', 'EXR', 'EXXI', 'F', 'FAF', 'FANG', 'FAST', 'FBHS', 'FBP', 'FBR', 'FCFS', 'FCNCA', 'FCS', 'FCX', 'FCY', 'FDML', 'FDO', 'FDP', 'FDS', 'FDX', 'FE', 'FEIC', 'FELE', 'FET', 'FFG', 'FFIN', 'FGP', 'FHN', 'FICO', 'FIG', 'FII', 'FIS', 'FITB', 'FLEX', 'FLR', 'FLS', 'FLT', 'FLTX', 'FMBI', 'FMC', 'FMER', 'FMS', 'FMX', 'FNB', 'FNF', 'FNFG', 'FNGN', 'FNP', 'FNSR', 'FNV', 'FR', 'FRAN', 'FRC', 'FRT', 'FRX', 'FSC', 'FSCE', 'FSL', 'FSP', 'FSRV', 'FTK', 'FTR', 'FUL', 'FULT', 'FWLT', 'FWRD', 'G', 'GA', 'GAB', 'GAME', 'GLF', 'GLNG', 'GLT', 'GLW', 'GM', 'GM', 'A', 'GM', 'GM-B', 'GMCR', 'GME', 'GMT', 'GNRC', 'GNTX', 'GNW', 'GOLD', 'GOOG', 'GOV', 'GPC', 'GPI', 'GPK', 'GPN', 'GPOR', 'GRA', 'GRMN', 'GRT', 'GS', 'GSF', 'GSH', 'GSJ', 'GSK', 'GT', 'GTE', 'GTI', 'GTPPP', 'GVA', 'GWR', 'GWRE', 'GWRU', 'GXP', 'GZT', 'H', 'HAE', 'HAIN', 'HAL', 'HAR', 'HBAN', 'HBHC', 'HBI', 'HBM', 'HCBK', 'HCC', 'HCSG', 'HDB', 'HE', 'HEI', 'HELE', 'HEP', 'HERO', 'HES', 'HFC', 'HHC', 'HI', 'HIG', 'HIG', 'HII', 'HITT', 'HIW', 'HK', 'HL', 'HLF', 'HLS', 'HLSS', 'HLX', 'HMA', 'HMC', 'HMIN', 'HMN', 'HMSY', 'HMY', 'HNI', 'HNP', 'HNT', 'HON', 'HOS', 'HOT', 'HOVNP', 'HP', 'HPP', 'HPQ', 'HPT', 'HPY', 'HR', 'HRC', 'HRG', 'HRL', 'HRS', 'HSC', 'HSH', 'HSP', 'HST', 'HSY', 'HT', 'HTA', 'HTGY', 'HTGZ', 'HTH', 'HTHT', 'HTLD', 'HTS', 'HTSI', 'HTWR', 'HTZ', 'HUM', 'HUN', 'HURN', 'HXL', 'HY', 'IACI', 'IAG', 'IART', 'IBA', 'IBKC', 'IBM', 'IBN', 'IBOC', 'ICA', 'ICE', 'ICLR', 'ICON', 'IDG', 'IDTI', 'IDXX', 'IEP', 'IEX', 'IFF', 'IGLD', 'IGT', 'IGTE', 'IHG', 'IHS', 'IIJI', 'IILG', 'IIVI', 'IM', 'IMAX', 'IMO', 'INCY', 'INFA', 'INFN', 'INFY', 'INGR', 'ININ', 'INT', 'INTC', 'INTU', 'INXN', 'INZ', 'IOC', 'IP', 'IPG', 'IPGP', 'IPHS', 'IPXL', 'IR', 'IRE', 'IRF', 'IRM', 'IRWD', 'ISBC', 'ISCA', 'ISIL', 'ISIS', 'ISP', 'ISRG', 'ITC', 'ITT', 'ITUB', 'ITW', 'IVR', 'IVZ', 'IX', 'JACK', 'JAH', 'JAZZ', 'JBHT', 'JBLU', 'JCP', 'JDSU', 'JEC', 'JHX', 'JJSF', 'JKHY', 'JLL', 'JNJ', 'JNS', 'JOE', 'JOSB', 'JOY', 'JPM', 'JPM', 'JSM', 'K', 'KALU', 'KAR', 'KB', 'KBH', 'KEG', 'KEP', 'KEX', 'KEY', 'KFI', 'KFN', 'KGC', 'KIM', 'KKD', 'KKR', 'KLAC', 'KMB', 'KMP', 'KMPR', 'KMR', 'KMT', 'KMX', 'KNM', 'KNX', 'KO', 'KOF', 'KOG', 'KORS', 'KOS', 'KR', 'KRC', 'KRFT', 'KRO', 'KS', 'KSS', 'KSU', 'KT', 'KW', 'KWN', 'KYO', 'L', 'LAMR', 'LANC', 'LAZ', 'LBTYA', 'LBTYB', 'LBTYK', 'LEA', 'LEAP', 'LECO', 'LEN', 'LFC', 'LFL', 'LG', 'LGCY', 'LGF', 'LH', 'LHO', 'LIFE', 'LII', 'LINTA', 'LINTB', 'LKQ', 'LL', 'LLL', 'LLTC', 'LLY', 'LMCA', 'LMT', 'LNC', 'LNC', 'LNKD', 'LNT', 'LOGI', 'LOPE', 'LORL', 'LPI', 'LPLA', 'LPNT', 'LPS', 'LPX', 'LRCX', 'LRN', 'LRY', 'LSI', 'LTM', 'LUK', 'LULU', 'LUV', 'LVLT', 'LVS', 'LXK', 'LXP', 'LXRX', 'LYB', 'LYG', 'LYV', 'LZB', 'M', 'MA', 'MAA', 'MAC', 'MAIN', 'MAN', 'MANH', 'MANT', 'MANU', 'MAR', 'MAS', 'MASI', 'MATW', 'MBFI', 'MBI', 'MBT', 'MCD', 'MCHP', 'MCK', 'MCO', 'MCY', 'MDCO', 'MDLZ', 'MDP', 'MDR', 'MDRX', 'MDSO', 'MDT', 'MDU', 'MENT', 'MEOH', 'MFC', 'MFG', 'MFRM', 'MGA', 'MGAM', 'MGEE', 'MGI', 'MGLN', 'MGM', 'MGR', 'MHK', 'MIC', 'MIDD', 'MJN', 'MKC', 'MKL', 'MKTAY', 'MKTX', 'MLI', 'MLM', 'MLNX', 'MMC', 'MMLP', 'MMM', 'MMP', 'MNKD', 'MNRO', 'MNST', 'MOH', 'MOLX', 'MOLXA', 'MON', 'MOS', 'MOV', 'MPC', 'MPEL', 'MPLX', 'MPW', 'MPWR', 'MR', 'MRC', 'MRH', 'MRO', 'MRVL', 'MS', 'MSA', 'MSCC', 'MSCI', 'MSFT', 'MSG', 'MSI', 'MSM', 'MSTR', 'MT', 'MTB', 'MTB', 'MTD', 'MTG', 'MTGE', 'MTH', 'MTL', 'MTU', 'MTW', 'MTX', 'MU', 'MUR', 'MWA', 'MWE', 'MWIV', 'MWV', 'MXIM', 'MYL', 'N', 'NATI', 'NAV', 'NBHC', 'NBL', 'NBR', 'NCLH', 'NCMI', 'NCR', 'NCT', 'NDAQ', 'NDSN', 'NE', 'NEM', 'NEOG', 'NETC', 'NEU', 'NFG', 'NFX', 'NGD', 'NGG', 'NGL', 'NGLS', 'NHI', 'NI', 'NICE', 'NJ', 'NJR', 'NKTR', 'NLSN', 'NLY', 'NMR', 'NNN', 'NOC', 'NOK', 'NOV', 'NPBC', 'NPO', 'NPSP', 'NRF', 'NRP', 'NS', 'NSC', 'NSH', 'NSM', 'NTI', 'NTK', 'NTL', 'NTRS', 'NTT', 'NU', 'NUAN', 'NUE', 'NUS', 'NUV', 'NVDA', 'NVO', 'NVS', 'NWBI', 'NWE', 'NWL', 'NWN', 'NXPI', 'NYCB', 'NYT', 'NYX', 'O', 'OAK', 'OAS', 'OB', 'OC', 'OC', 'OCN', 'ODFL', 'OEH', 'OFC', 'OGE', 'OHI', 'OIBR', 'OII', 'OILT', 'OIS', 'OLN', 'OMAB', 'OMC', 'ONB', 'ONNN', 'ONXX', 'OPK', 'ORA', 'ORB', 'ORCL', 'ORI', 'ORIG', 'ORLY', 'OSK', 'OTEX', 'OXM', 'OXY', 'OZM', 'OZRK', 'PAA', 'PAAS', 'PAC', 'PACD', 'PACW', 'PAG', 'PANW', 'PB', 'PBA', 'PBCT', 'PBH', 'PBI', 'PBR', 'PBYI', 'PCAR', 'PCG', 'PCH', 'PCL', 'PCLN', 'PCP', 'PCRX', 'PDCO', 'PDH', 'PDM', 'PDS', 'PEB', 'PEG', 'PEGA', 'PEI', 'PENN', 'PFG', 'PG', 'PGH', 'PGR', 'PH', 'PHG', 'PHH', 'PHI', 'PII', 'PJH', 'PKG', 'PKX', 'PKY', 'PL', 'PLCE', 'PLL', 'PLXS', 'PM', 'PMCS', 'PMT', 'PMTC', 'PNC', 'PNC', 'PNG', 'PNK', 'PNRA', 'PNW', 'PNY', 'PODD', 'POL', 'POOL', 'POR', 'POT', 'POWI', 'PPC', 'PPL', 'PPO', 'PRA', 'PRAA', 'PRE', 'PRGO', 'PRGS', 'PRIM', 'PRK', 'PRU', 'PRXL', 'PRY', 'PSA', 'PSB', 'PSE', 'PSEC', 'PSX', 'PT', 'PTEN', 'PTNR', 'PTP', 'PTR', 'PUK', 'PVD', 'PVH', 'PWE', 'PXD', 'PZZA', 'QCOM', 'QCOR', 'QGEN', 'QIHU', 'QLIK', 'RAD', 'RAI', 'RAX', 'RBA', 'RBC', 'RBS', 'RCI', 'RCII', 'RCL', 'RDC', 'RDN', 'RDY', 'REG', 'REGN', 'RENN', 'REXX', 'RF', 'RFP', 'RGA', 'RGC', 'RGP', 'RH', 'RHI', 'RHP', 'RIG', 'RIO', 'RJD', 'RJF', 'RKT', 'RL', 'RLGY', 'RLI', 'RLJ', 'RMD', 'RNF', 'RNR', 'ROC', 'ROK', 'ROLL', 'ROSE', 'ROVI', 'RPAI', 'RPM', 'RRC', 'RRD', 'RS', 'RSG', 'RTN', 'RUK', 'RVBD', 'RVT', 'SCI', 'SCL', 'SCS', 'SCSS', 'SCTY', 'SD', 'SDLP', 'SDRL', 'SE', 'SEB', 'SEE', 'SEIC', 'SEM', 'SEMG', 'SEMG', 'SEP', 'SF', 'SFG', 'SFL', 'SFN', 'SFUN', 'SGMS', 'SGY', 'SHFL', 'SHG', 'SHI', 'SHLD', 'SHO', 'SHPG', 'SHW', 'SI', 'SIAL', 'SID', 'SIG', 'SIGI', 'SINA', 'SIRI', 'SIRO', 'SIVB', 'SIX', 'SJI', 'SJM', 'SJR', 'SKS', 'SKT', 'SLAB', 'SLB', 'SLCA', 'SLF', 'SLG', 'SLM', 'SLMAP', 'SLMBP', 'SLT', 'SLW', 'SLXP', 'SM', 'SMFG', 'SMG', 'SMI', 'SMLP', 'SMS', 'SMTC', 'SNA', 'SNCR', 'SNDK', 'SNE', 'SNH', 'SNHN', 'SNI', 'SNN', 'SNP', 'SNV', 'SNX', 'SNY', 'SO', 'SODA', 'SOHU', 'SON', 'SPB', 'SPF', 'SPG', 'SPH', 'SPIL', 'SPLK', 'SPN', 'SPP', 'SPR', 'SPRD', 'SPW', 'SPWR', 'SQM', 'SRC', 'SRE', 'SRPT', 'SSD', 'SSL', 'SSNC', 'SSS', 'SSW', 'ST', 'STE', 'STEI', 'A', 'STM', 'STN', 'STNG', 'STO', 'STR', 'STRZA', 'STRZB', 'STSA', 'STT', 'STWD', 'STX', 'STZ', 'SU', 'SUSQ', 'SVU', 'SWC', 'SWFT', 'SWJ', 'SWK', 'SWKS', 'SWM', 'SWN', 'SWX', 'SWY', 'SXL', 'SXT', 'SYA', 'SYK', 'SYMC', 'SYNA', 'SYT', 'SYY', 'T', 'TAC', 'TAL', 'TAP', 'TARO', 'TCB', 'TCB', 'TCBI', 'TCK', 'TD', 'TDA', 'TDC', 'TDE', 'TDG', 'TDI', 'TDJ', 'TDS', 'TDW', 'TDY', 'TECD', 'TECH', 'TEF', 'TEG', 'TEL', 'TEN', 'TEO', 'TEVA', 'TEX', 'TFSL', 'TFX', 'TGH', 'TGP', 'TGT', 'THC', 'THG', 'THI', 'THOR', 'TI', 'TIF', 'TIVO', 'TK', 'TKC', 'TKR', 'TLK', 'TLLP', 'TLM', 'TM', 'TMH', 'TMK', 'TMO', 'TNH', 'TOL', 'TOO', 'TOT', 'TPX', 'TQNT', 'TR', 'TRAK', 'TRI', 'TRMB', 'TRMK', 'TRN', 'TROW', 'TROX', 'TRP', 'TRQ', 'TRS', 'TRV', 'TRW', 'TS', 'TSCO', 'TSLA', 'TSM', 'TSO', 'TSS', 'TSU', 'TTC', 'TTEC', 'TTM', 'TTWO', 'TU', 'TUP', 'TV', 'TW', 'TWC', 'TWO', 'TWO', 'TWTC', 'TWX', 'TX', 'TXN', 'TXT', 'TYC', 'TYL', 'UAL', 'UBNT', 'UBS', 'UBSI', 'UFS', 'UGI', 'UGP', 'UHAL', 'UHS', 'UIL', 'UIS', 'UL', 'ULTI', 'UMBF', 'UMC', 'UMPQ', 'UN', 'UNF', 'UNFI', 'UNH', 'UNM', 'UNP', 'UNS', 'UNT', 'UPL', 'UPS', 'URS', 'USB', 'USG', 'USM', 'USNA', 'USTR', 'UTHR', 'UTIW', 'UTX', 'UVV', 'UZA', 'V', 'VAC', 'VAL', 'VALE', 'VAR', 'VC', 'VCI', 'VCO', 'VE', 'VECO', 'VFC', 'VGR', 'VHS', 'VIA', 'VIAB', 'VIP', 'VIPS', 'VIV', 'VLO', 'VLY', 'VLY', 'VMC', 'VMI', 'VNO', 'VNR', 'VOD', 'VOLC', 'VPHM', 'VPRT', 'VRNT', 'VRTS', 'VRTX', 'VRX', 'VSH', 'VVC', 'VZ', 'WAB', 'WABC', 'WAC', 'WACLY', 'WAFD', 'WAG', 'WAIR', 'WAL', 'WAT', 'WBC', 'WBK', 'WBMD', 'WBS', 'WBS', 'WCC', 'WCG', 'WCN', 'WCRX', 'WDC', 'WDR', 'WEC', 'WEN', 'WERN', 'WES', 'WETF', 'WEX', 'WF', 'WFC', 'WFC', 'WFM', 'WFT', 'WGL', 'WGP', 'WHR', 'WIN', 'WIT', 'WLK', 'WLL', 'WMB', 'WMGI', 'WMS', 'WNR', 'WNS', 'WOR', 'WPC', 'WPO', 'WPPGY', 'WPRT', 'WPZ', 'WRB', 'WRD', 'WRE', 'WRI', 'WSH', 'WST', 'WTFC', 'WTM', 'WTS', 'WTW', 'WU', 'WWAV', 'WWW', 'WX', 'WY', 'WYN', 'X', 'XEC', 'XEL', 'XL', 'XLS']
@@ -172,695 +173,17 @@ $(function() {
     });
   });
 
-function renderRecentQuotes(data) {
-    var div = document.getElementById('quotes');
-    div.innerHTML = '';
-    for (var i=0; i<data.length; i++) {
-    	var pchange = data[i].change.substr(0, data[i].change.length-1);
-    	var pchangeStyle = "quote";
-    	if (pchange>0) { pchangeStyle = 'changeUp' };
-    	if (pchange<0) { pchangeStyle = 'changeDown' }
-        if (data[i].price != 0) { div.innerHTML = div.innerHTML + '<div class="quote">' + data[i].symbol + '</div><div class="quote">' + data[i].price + '</div><div class="' + pchangeStyle + '";>' + data[i].change + '</div><br>'; }
-    }
-}
-
-function removeFromArray(value, array) {
-	var newArray = [];
-	for (var i=0; i<array.length; i++) {
-		if (array[i] != value) {
-			newArray.push(array[i]);
-		}
-	}
-	return newArray;
-}
-
-function deleteDiv(div) {
-    div.parentNode.removeChild(div);
-    divID = div.id;
-    ticker = divID.substr(7, divID.length);
-    currentTickers = removeFromArray(ticker, currentTickers);
-}
-
-function getRecentTickers() {
-	return recentTickers;
-}
-
-function updateRecentQuotes(url) {
-    $.getJSON(url,
-        function(data) {
-            renderRecentQuotes(data.query.results.row);
-            cData = data;
-             }
-    ); }
-
-function inArray(array, value) {
-    for (var i=0; i<array.length; i++) {
-        if (array[i] == value) { return true; }
-    }
-    return false;
-}
-
-function updateFrequency(divID) {
-	document.getElementById('dailyFreq').className = "notSelected";
-	document.getElementById('weeklyFreq').className = "notSelected";
-	document.getElementById('monthlyFreq').className = "notSelected";
-	document.getElementById(divID).className = "selected";
-	frequency = divID.substr(0, 1);
-}
-
-function selectRecords(divID) {
-	recordDivtoNumber = {'tenRecords': 10, 'hundredRecords': 100, 'thousandRecords': 1000, 'allRecords': 1000000000 }
-	document.getElementById('tenRecords').className = "notSelected";
-	document.getElementById('hundredRecords').className = "notSelected";
-	document.getElementById('thousandRecords').className = "notSelected";
-	document.getElementById('allRecords').className = "notSelected";
-	document.getElementById(divID).className = "selected";
-	recordNumber = recordDivtoNumber[divID];
-	renderCharts(data);
-};
-
-function downloadJSON2CSV(objArray) {
-	var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
-	var str = 'Date,Open,High,Low,Close,AdjClose,PriorAdjClose,Volume,Ticker\n';
-
-	for (var i=0; i<array.length; i++) {
-		var line = '', ln = array[i]
-		line += ln.date+','+ln.open+','+ln.high+','+ln.low+','+ln.close+','+ln.adjclose+','+ln.priorClose+','+ln.volume+','+ln.ticker;
-		
-		line.slice(0,line.Length-1); 
-            str += line + '\r\n';
-        }
-        window.open( "data:text/csv;charset=utf-8," + escape(str))
-    }
-
-function addTicker(ticker, recentTickers) {
-	ticker = ticker.replace(' ', '');
-	if (ticker == '') { return null; }
-	if (inArray(currentTickers, ticker) == false) { 
-		currentTickers.push(ticker); 
-		var div = document.getElementById('currentTickers');
-  		div.innerHTML = div.innerHTML + '<div onclick="deleteDiv(this)" id=current' + ticker + ' class="TBVtickers">' + ticker + ' x</div>';
-  		document.getElementById('tickers').value = '';
-	}
-	if (inArray(recentTickers, ticker) == false) {
-		recentTickers.push(ticker);
-		cval = getCookie('recentTickers');
-	if (cval == "") { cval = ticker }
-	else { cval = cval + ',' + ticker; }
-	createCookie('recentTickers', cval);
- }
-  
-  }
-
-function buildHistURL(ticker, fromDate, toDate) {
-    fromDate = fromDate.toString(), toDate = toDate.toString();
-    var fromYear = fromDate.substr(0,4), fromMonth = fromDate.substr(4,2)-1, fromDay = fromDate.substr(6,2)
-    var toYear = toDate.substr(0,4), toMonth = toDate.substr(4,2)-1, toDay = toDate.substr(6,2)
-    return "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20csv%20where%20url%3D'http%3A%2F%2Fichart.finance.yahoo.com%2Ftable.csv%3Fs%3D" + ticker + "%26d%3D" + toMonth + "%26e%3D" + toDay + "%26f%3D" + toYear + "%26g%3D"+frequency+"%26a%3D" + fromMonth + "%26b%3D" + fromDay + "%26c%3D" + fromYear + "%26ignore%3D.csv'%20and%20columns%3D'Date%2COpen%2CHigh%2CLow%2CClose%2CVolume%2CAdjClose'&format=json&diagnostics=true"
-};
-
-function renderHistoricString(historicString) {
-	var hDiv = document.getElementById('historicData');
-	hDiv.innerHTML = historicString;
-}
-
-function createCookie(name, value, days) {
-    if (days) {
-        var date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        var expires = "; expires=" + date.toGMTString();
-    }
-    else var expires = "";
-    document.cookie = name + "=" + value + expires + "; path=/";
-}
-
-function getCookie(c_name) {
-    if (document.cookie.length > 0) {
-        c_start = document.cookie.indexOf(c_name + "=");
-        if (c_start != -1) {
-            c_start = c_start + c_name.length + 1;
-            c_end = document.cookie.indexOf(";", c_start);
-            if (c_end == -1) {
-                c_end = document.cookie.length; }
-            return unescape(document.cookie.substring(c_start, c_end));
-        }
-    }
-    return "";
-}
-
-function populateSearches() {
-	searches = getCookie('Searches').split('-');
-	searchHTML = '';
-	for (var i=0; i<searches.length; i++) {
-		searchHTML += '<div class="onHover" onclick="clickSearch(this)" id="search">' + searches[i] + '</div>'; }
-	document.getElementById('searches').innerHTML = searchHTML;
-	document.getElementById('searches').style.height = Math.min(200, searches.length*20)+'px';
-};
-
-function clickSearch(div) {
-	Clear();
-	var params = div.innerHTML.split(' ');
-	var tickers = params[0].split(',');
-	var frequency = params[params.length-1];
-	var fromDate = '', toDate = '';
-	for (var i=1; i<params.length-1; i++) {
-		if (params[i].substr(0,4)=='from') {
-			fromDate = params[i].substr(5, params[i].length); }
-		if (params[i].substr(0,2)=='to') {
-			toDate = params[i].substr(3, params[i].length);}
-	}
-	for (var i=0; i<tickers.length; i++) {
-		ticker = tickers[i]; addTicker(ticker, recentTickers);
-	}
-	getHistoric(fromDate, toDate, tickers, frequency, recentTickers);
-}
-
-function setSearchCookie(fromDate, toDate) {
-	var freqConv = {'d': 'daily', 'w': 'weekly', 'm': 'monthly'};
-	var search = currentTickers.toString();
-	if (fromDate!='') { search += ' from=' + fromDate.toString() };
-	if (toDate!='') { search += ' to=' + toDate.toString() };
-	search += ' frequency=' + freqConv[frequency];
-	Searches = getCookie('Searches').split('-');
-	searches = search;
-	for (var i=0; i<Searches.length; i++) {
-		if (Searches[i] != search) { 
-			searches += '-' + Searches[i]  }
-	}
-	createCookie('Searches', searches);
-}
-
-function formatArea() {
-    document.getElementById('download').className = 'button';
-    document.getElementById('download').style.width = '96px';
-    document.getElementById('clear').className = 'button';
-    document.getElementById('clear').style.width = '96px';
-    document.getElementById('fluctuationChart').style.color = 'blue';
-    document.getElementById('dataCount').style.color = '#black';
-    var Texts = ['Date','Ticker','Open','High','Low','Close','Adj Close','Volume', 'download', 'clear', '10', '100', '1000', 'all'];
-    var IDs = ['c1','c2','c3','c4','c5','c6','c7','c8', 'download', 'clear', 'tenRecords', 'hundredRecords', 'thousandRecords', 'allRecords'];
-    for (var i=0; i<Texts.length; i++) {
-    	document.getElementById(IDs[i]).innerHTML = Texts[i];
-    	document.getElementById(IDs[i]).style = ''; }
-    }
-
-function unFormatArea() {
-    document.getElementById('download').className = '';
-    document.getElementById('clear').className = '';
-    document.getElementById('fluctuationChart').style.color = 'white';
-    document.getElementById('dataCount').style.color = 'white';
-    var IDs = ['c1','c2','c3','c4','c5','c6','c7','c8', 'download', 'clear', 'tenRecords', 'hundredRecords', 'thousandRecords', 'allRecords'];
-    for (var i=0; i<IDs.length; i++) {
-    	document.getElementById(IDs[i]).innerHTML = ''; }
-    }
-
-function Clear() {
-	unFormatArea();
-	currentTickers = [];
-	document.getElementById('currentTickers').innerHTML = '';
-	document.getElementById('fromDate').innerHTML = '';
-	document.getElementById('toDate').innerHTML = '';
-	document.getElementById('tickers').innerHTML = '';
-	data = '';
-}
-
-function validateTickers(cData, currentTickers) {
-	var cResults = cData.query.results.row
-	for (var j=0; j<currentTickers.length; j++) {
-		for (var i=0; i<cResults.length; i++) {
-			if (cResults[i].symbol == currentTickers[j]) {
-				if (cResults[i].price == '0.00' && cResults[i].change == 'N/A') {
-					document.getElementById('current'+currentTickers[j]).style.backgroundColor = '#ff7373';
-					currentTickers.splice(j, 1);}
-				else { document.getElementById('current'+currentTickers[j]).style.backgroundColor = 'lightGreen'; }
-		}
-		}
-	}
-	return currentTickers;
-}
-
-function getHistoric(fromDate, toDate, currentTickers, frequency, recentTickers) {
-	URL = createURL(recentTickers);
-	$.ajaxSetup({async: false});
-	updateRecentQuotes(URL);
-	$.ajaxSetup({async: true});
-	currentTickers = validateTickers(cData, currentTickers)
-
-	if (currentTickers.length == 0) {
-		document.getElementById('tickers').style.backgroundColor = '#ff7373';
-		document.getElementById('tickers').style.color = 'white';
-		document.getElementById('tickers').style.textAlign = 'center';
-		document.getElementById('tickers').value = 'enter ticker';
-		setTimeout(function() {
-      		document.getElementById('tickers').style.backgroundColor = 'white';
-      		document.getElementById('tickers').value = '';
-      		document.getElementById('tickers').style.color = 'gray';
-      		document.getElementById('tickers').style.textAlign = 'left';
-      	}, 1000);
-	return null; }
-
-    setSearchCookie(fromDate, toDate);
-    if (toDate === '') { // Default to today
-    	var div = document.getElementById('toDate');
-    	div.style.backgroundColor = 'lightGreen'; div.style.color = 'white'; div.style.textAlign = 'center'; div.style.fontSize = '10px'; div.value = 'defaulted: today';
-        var today = new Date();
-        var year = today.getFullYear().toString(), month = (today.getMonth()+1).toString(), day = today.getDate().toString();
-        if (day.length == 1) { today = '0' + today; };
-        if (month.length == 1) { month = '0' + month; };
-        toDate = year + month + day; }
-
-    if (fromDate === '' ) { // Default to 1 year from start date
-    	var div = document.getElementById('fromDate');
-    	div.style.backgroundColor = 'lightGreen'; div.style.color = 'white'; div.style.textAlign = 'center'; div.style.fontSize = '10px'; div.value = 'defaulted: 1 year';
-        fromDate = (toDate - 10000).toString(); }
-    
-    var jxhr = [], result = [], urls = [], consolData = [];
-    for (var i=0; i<currentTickers.length; i++) {
-    	histURL = buildHistURL(currentTickers[i], fromDate, toDate);
-    	urls.push(histURL);
-    }
-    $.each(urls, function(i, url) {
-    	jxhr.push($.getJSON(url, function (data) {
-    		result[i] = data.query.results; })
-    	); })
-
-    $.when.apply($, jxhr).done(function() {
-    	for (var i=0; i<result.length; i++) {
-    		var Ticker = currentTickers[i], tickerData = result[i].row;
-    		for (var j=1; j<tickerData.length; j++) {
-    			line = tickerData[j];
-    			var newLine = new Object();
-    			newLine.date = line['Date'], newLine.open = line.Open, newLine.high = line.High, newLine.low = line.Low, newLine.close = line.Close, newLine.volume = line.Volume, newLine. adjclose = line.AdjClose, newLine.ticker = Ticker
-    			consolData.push(newLine);
-    		}
-    	}
-    	var div = document.getElementById('toDate');
-    	if (div.value == 'defaulted: today') {
-    		div.value = ''; div.style.backgroundColor = 'white'; div.style.color = '#98abc5'; div.style.textAlign = 'left'; div.style.fontSize = '12px';
-    	}
-    	var div = document.getElementById('fromDate');
-    	if (div.value == 'defaulted: 1 year') {
-    		div.value = ''; div.style.backgroundColor = 'white'; div.style.color = '#98abc5'; div.style.textAlign = 'left'; div.style.fontSize = '12px';
-    	}
-
-    	myJson = consolData;
-    	data = JSON.parse(JSON.stringify(myJson));
-    	renderCharts(data);
-    	formatArea();
-    	populateSearches();
-    });
-}
-
-function updateFrequency(divID) {
-	document.getElementById('dailyFreq').className = "notSelected";
-	document.getElementById('weeklyFreq').className = "notSelected";
-	document.getElementById('monthlyFreq').className = "notSelected";
-	document.getElementById(divID).className = "selected";
-	frequency = divID.substr(0, 1);
-}
-
 </script>
 
 <script type="text/javascript">
-
-var gainOrLossChart = dc.pieChart("#gain-loss-chart");
-var fluctuationChart = dc.barChart("#fluctuation-chart");
-var quarterChart = dc.pieChart("#quarter-chart");
-var dayOfWeekChart = dc.rowChart("#day-of-week-chart");
-var tickersChart = dc.rowChart("#tickers-chart");
-var yearlyBubbleChart = dc.bubbleChart("#yearly-bubble-chart");
-var priceChart = dc.compositeChart("#price-chart");
-var VolumeChart = dc.compositeChart("#Volume-chart");
-
-function renderCharts(data) {
-            var dateFormat = d3.time.format("%Y-%m-%d");
-            var numberFormat = d3.format(".2f");
-            var minDate = new Date(2100, 0, 1), maxDate = new Date(1900, 0, 1);
-            var nestByDate = d3.nest()
-                .key(function(d) { return d3.time.day(d.date); });
-
-            var sum = function(arr) {
-                var total = 0;
-                for (var i=0; i<arr.length; i++)
-                { total += parseFloat(arr[i]) }
-                return total;
-            };
-
-            data.forEach(function (d, i) {
-                d.dd = dateFormat.parse(d.date);
-                d.month = d3.time.month(d.dd); 
-                d.year = d.dd.getFullYear();
-                d.adjclose = parseFloat(d.adjclose).toFixed(2);
-                if (d.dd < minDate) { minDate = d.dd; };
-                if (d.dd > maxDate) { maxDate = d.dd; };
-                if ((i < data.length-1) && (d.ticker == data[i+1].ticker)) {
-                        d.priorClose = parseFloat(data[i+1].adjclose) }
-                else { d.priorClose = parseFloat(d.open) }
-            });
-
-            var ndx = crossfilter(data);
-            var all = ndx.groupAll();
-
-            var yearlyDimension = ndx.dimension(function (d, i) {
-                return d3.time.year(d.dd); });
-            
-            var yearlyPerformanceGroup = yearlyDimension.group().reduce(
-                    function (p, v) {
-                        ++p.count;
-                        p.absGain += v.adjclose - v.priorClose;
-                        p.fluctuation += Math.abs(v.adjclose - v.priorClose);
-                        p.sumIndex += (parseFloat(v.adjclose) + v.priorClose) / 2;
-                        p.avgIndex = p.sumIndex / p.count;
-                        p.percentageGain = (p.absGain / p.avgIndex) * 100;
-                        p.fluctuationPercentage = (p.fluctuation / p.avgIndex) * 100;
-                        return p; },
-
-                    function (p, v) {
-                        --p.count;
-                        p.absGain -= v.adjclose - v.priorClose;
-                        p.fluctuation -= Math.abs(v.adjclose - v.priorClose);
-                        p.sumIndex -= (parseFloat(v.adjclose) + v.priorClose) / 2;
-                        p.avgIndex = p.sumIndex / p.count;
-                        p.percentageGain = (p.absGain / p.avgIndex) * 100;
-                        p.fluctuationPercentage = (p.fluctuation / p.avgIndex) * 100;
-                        return p; },
-
-                    function () {
-                        return {count: 0, absGain: 0, fluctuation: 0, fluctuationPercentage: 0, sumIndex: 0, avgIndex: 0, percentageGain: 0}; }
-            );
-
-			var dateDimension = ndx.dimension(function (d) {
-                return d.dd;
-            });
-
-            var moveMonths = ndx.dimension(function (d) {
-                return d.month});
-
-            var indexAvgByMonthGroup = moveMonths.group().reduce(
-                function (p, v) {
-                    if (v.adjclose <= p.min)
-                        { p.candidates.unshift(v.adjclose); };
-                    if (v.adjclose >= p.max()) 
-                        { p.candidates.push(v.adjclose) };
-                    return p; },
-                function (p, v) {
-                    var index = p.candidates.indexOf(v.adjclose);
-                    if (index >= 0) { p.candidates.splice(index, 1) };
-                        return p; },
-                function () {
-                    return {candidates: [],
-                        max: function() { return (this.candidates.length > 0) ? (this.candidates[this.candidates.length - 1]) : null },
-                        min: function() { return (this.candidates.length > 0) ? (this.candidates[0]) : null },
-                        total: function() { return (sum(this.candidates))  },
-                        avg: function() { return (sum(this.candidates) / this.candidates.length) } }}
-                );
-
-            var gainOrLoss = ndx.dimension(function (d) {
-                return +d.open > +d.close ? "Loss" : "Gain"; });
-            var gainOrLossGroup = gainOrLoss.group();
-
-            var fluctuation = ndx.dimension(function (d) {
-                return Math.round((d.adjclose - d.priorClose) / d.priorClose * 100); });
-            
-            var fluctuationGroup = fluctuation.group();
-
-            var quarter = ndx.dimension(function (d) {
-                var month = d.dd.getMonth();
-                var quarter = 'Q' + (Math.ceil((month+1)/3));
-                return quarter; });
-
-            var quarterGroup = quarter.group().reduceSum(function (d) {
-                return d.volume; });
-
-            var tickers = ndx.dimension(function (d) {
-                return d.ticker; });
-
-            var tickersGroup = tickers.group();
-            
-            var prices = dateDimension.group().reduce(
-                function (p, v) {
-                    ticker = v.ticker;
-                    p[ticker] = v.adjclose;
-                    return p; },
-                
-                function (p, v) {
-                    ticker = v.ticker;
-                    p[ticker] = 0;
-                    return p; },
-                // init
-                function () {
-                    return {};}
-            );
-
-            var volumes = dateDimension.group().reduce(
-                function (p, v) {
-                    ticker = v.ticker;
-                    p[ticker] = v.volume/1000000;
-                    return p; },
-                
-                function (p, v) {
-                    ticker = v.ticker;
-                    p[ticker] = 0;
-                    return p; },
-                
-                function () {
-                    return {};
-                }
-            );
-
-            var dayOfWeek = ndx.dimension(function (d) {
-                var day = d.dd.getDay();
-                switch (day) {
-                    case 0: return "0.Sun";
-                    case 1: return "1.Mon";
-                    case 2: return "2.Tue";
-                    case 3: return "3.Wed";
-                    case 4: return "4.Thu";
-                    case 5: return "5.Fri";
-                    case 6: return "6.Sat";
-                } });
-
-            var dayOfWeekGroup = dayOfWeek.group();
-
-            var colors = ["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];
-            // var colors = ['#0000CC', '#0033FF', '#00CC00', '#00CCCC', '#00FF33', '#00FFFF', '#330066', '#336699', '#33CCFF', '#660066', '#6600FF', '#663333', '#6666CC', '#66FF33', '#9966CC', '#CC0000', '#CC00CC', '#CCFF33', '#FF9933', '#FFFF33' ]
-
-            yearlyBubbleChart.width(600)
-                    .height(200)
-                    .margins({top: 5, right: 50, bottom: 20, left: 50})
-                    .dimension(yearlyDimension)
-                    .group(yearlyPerformanceGroup)
-                    .transitionDuration(1500)
-                    .colors(["#a60000", "#ff0000", "#ff4040", "#ff7373", "#67e667", "#39e639", "#00cc00"])
-                    .colorDomain([-12000, 12000])
-                    .colorAccessor(function (d) { return d.value.absGain; })
-                    .keyAccessor(function (p) { return p.value.absGain; })
-                    .valueAccessor(function (p) { return p.value.percentageGain; })
-                    .radiusValueAccessor(function (p) { return p.value.fluctuationPercentage; })
-                    .maxBubbleRelativeSize(0.2)
-                    .x(d3.scale.linear().domain([-2500, 2500]))
-                    .y(d3.scale.linear().domain([-100, 100]))
-                    .r(d3.scale.linear().domain([0, 4000]))
-                    .elasticY(true)
-                    .yAxisPadding(100)
-                    .elasticX(true)
-                    .xAxisPadding(500)
-                    .renderHorizontalGridLines(true)
-                    .renderVerticalGridLines(true)
-                    .renderLabel(true)
-                    .renderTitle(true)
-                    .label(function (p) { return p.key.getFullYear(); })
-                    .title(function (p) {
-                        return p.key.getFullYear()
-                                + "\n"
-                                + "change: " + numberFormat(p.value.absGain) + "\n"
-                                + "% change : " + numberFormat(p.value.percentageGain) + "%\n"
-                                + "Fluctuation / Index Ratio: " + numberFormat(p.value.fluctuationPercentage) + "%";
-                    })
-                    .yAxis().tickFormat(function (v) { return v + "%"; });
-
-            gainOrLossChart.width(150)
-                    .height(150)
-                    .radius(60)
-                    .dimension(gainOrLoss)
-                    .group(gainOrLossGroup)
-                    .label(function (d) {
-                        if(gainOrLossChart.hasFilter() && !gainOrLossChart.hasFilter(d.data.key))
-                            return d.data.key + "(0%)";
-                        return d.data.key + "(" + Math.floor(d.data.value / all.value() * 100) + "%)";
-                    });
-
-            quarterChart.width(150)
-                    .height(150)
-                    .radius(60)
-                    .innerRadius(30)
-                    .dimension(quarter)
-                    .group(quarterGroup);
-
-            tickersChart.width(150)
-                .height(currentTickers.length*80/Math.sqrt(currentTickers.length))
-                .margins({top: 10, left: 30, right: 10, bottom: 20})
-                .group(tickersGroup)
-                .dimension(tickers)
-                .colors(colors)
-                .label(function (d){
-                    return d.key; })
-                .title(function(d){return d.key;})
-                .elasticX(true)
-                .xAxis().ticks(4);
-
-            dayOfWeekChart.width(150)
-                .height(170)
-                .margins({top: 10, left: 30, right: 10, bottom: 20})
-                .group(dayOfWeekGroup)
-                .dimension(dayOfWeek)
-                .colors(['#3182bd', '#6baed6', '#9ecae1', '#c6dbef', '#dadaeb'])
-                .label(function (d){
-                    return d.key.split(".")[1];})
-                .title(function(d) { return d.value; })
-                .elasticX(true)
-                .xAxis().ticks(4);
-
-            fluctuationChart.width(200)
-                    .height(150)
-                    .margins({top: 30, right: 0, bottom: 30, left: 20})
-                    .dimension(fluctuation)
-                    .group(fluctuationGroup)
-                    .elasticY(true)
-                    .centerBar(true)
-                    .gap(1)
-                    .round(dc.round.floor)
-                    .x(d3.scale.linear().domain([-25, 25]))
-                    .renderHorizontalGridLines(true)
-                    .filterPrinter(function (filters) {
-                        var filter = filters[0], s = "";
-                        s += numberFormat(filter[0]) + "% -> " + numberFormat(filter[1]) + "%";
-                        return s; })
-                    .xAxis()
-                    .tickFormat(function (v) {
-                        return v + "%"; });
-
-            dc.dataCount(".dc-data-count")
-                    .dimension(ndx)
-                    .group(all);
-            
-            dc.dataTable(".dc-data-table")
-                    .dimension(dateDimension)
-                    .group(function (d) { var format = d3.format("02d");
-                        return d.dd.getFullYear() + "-" + format((d.dd.getMonth() + 1)); })
-                    .size(recordNumber)
-                    .columns([
-                        function (d) { return d.date; },
-                        function (d) { return d.ticker; },
-                        function (d) { return d.open; },
-                        function (d) { return d.high; },
-                        function (d) { return d.low; },
-                        function (d) { return d.close; },
-                        function (d) { return d.adjclose; },
-                        function (d) { return d.volume; }
-                    ])
-                    .sortBy(function (d) { return d.dd; })
-                    .order(d3.descending)
-                    .renderlet(function (table) { table.selectAll(".dc-table-group").classed("info", true)})
-                    // .renderlet(function (table) { table.selectAll("td").style("border", "1px solid #98abc5")})
-                    .renderlet(function (table) { table.selectAll("td").style("text-align", "center")})
-                    .renderlet(function (table) { table.selectAll("td").style("font-size", "10px")})
-                    .renderlet(function (table) { table.selectAll("th").style("text-align", "center")});
-
-            function getProperty(o, prop) {
-                if (o[prop] !== undefined) return o[prop];
-                else return 0;
-            }
-            
-            function getTickers(tickersGroup) {
-                var tickerObjects = tickersGroup.all();
-                var Tickers = []
-                for (var i=0; i<tickerObjects.length; i++) {
-                    Tickers.push(tickerObjects[i].key); };
-                return Tickers;
-            }
-
-            Tickers = getTickers(tickersGroup);
-
-            var genLineChart = function(ticker, color, Group) {
-                var line = dc.lineChart(priceChart, ticker)
-                    .group(Group, ticker)
-                    .valueAccessor(function (d) { return parseFloat(getProperty(d.value, ticker)) })
-                    .colors([color])
-                    .renderArea(true)
-                    .title(function (d) { var value = parseFloat(d.data.value[ticker]);
-                        return ticker + "\n" + dateFormat(d.data.key) + "\n" + numberFormat(value); })
-                return line;
-            }
-            
-            var getCharts = function(Tickers, colors, Group) {
-                var LineCharts = [];
-                for (var i=0; i<Tickers.length; i++) {
-                    var ticker = Tickers[i], color = colors[i];
-                    lineChart = genLineChart(ticker, color, Group);
-                    LineCharts.push(lineChart);
-                }
-                return LineCharts;
-            }
-
-            var priceCharts = getCharts(Tickers, colors, prices);
-            var volumeCharts = getCharts(Tickers, colors, volumes);
-
-            var color = d3.scale.ordinal().range(colors);
-
-            priceChart.width(600)
-                .height(300)
-                .transitionDuration(1000)
-                .margins({top: 30, right: 50, bottom: 25, left: 50})
-                .dimension(dateDimension)
-                .group(prices)
-                .valueAccessor(function (d) {
-                    return d.value.ticker; })
-                .x(d3.time.scale().domain([minDate, maxDate]))
-                .round(d3.time.month.round)
-                .xUnits(d3.time.months)
-                .elasticY(true)
-                .elasticX(true)
-                .renderHorizontalGridLines(true)
-                .legend(dc.legend().x(800).y(10).itemHeight(13).gap(1))
-                .brushOn(false)
-                .rangeChart(VolumeChart)
-                .compose(priceCharts)
-                .xAxis()
-                ;
-
-            priceChart.renderlet(function (table) { table.selectAll("g").data(Tickers)
-                .enter().append("g")
-                .attr("class", "legend")
-                .style("font-size", "5px")
-                .attr("transform", function(d, i) { 
-                  return "translate(0," + i * 20 + ")"; })
-                .append("rect").attr("x", 500-18).attr("width", 18).attr("height", 18).style("fill", '#dadaeb')
-                .append("text").attr("x", 500-24).attr("y", 9).attr("dy", ".35em").style("text-anchor", "end").text(function(d) { return d; });
-             });
-
-            VolumeChart.width(600)
-                    .height(100)
-                    .transitionDuration(1000)
-                    .margins({top: 0, right: 50, bottom: 25, left: 50})
-                    .dimension(dateDimension)
-                    .group(volumes)
-                    .valueAccessor(function (d) {
-                        return d.value.ticker; })
-                    .x(d3.time.scale().domain([minDate, maxDate]))
-                    .round(d3.time.month.round)
-                    .xUnits(d3.time.months)
-                    .elasticY(true)
-                    .elasticX(true)
-                    .renderHorizontalGridLines(true)
-                    // .legend(dc.legend().x(800).y(0).itemHeight(13).gap(1))
-                    .brushOn(true)
-                    .compose(volumeCharts)
-                    .xAxis();
-
-        dc.renderAll();
-}
-
+	var gainOrLossChart = dc.pieChart("#gain-loss-chart");
+	var fluctuationChart = dc.barChart("#fluctuation-chart");
+	var quarterChart = dc.pieChart("#quarter-chart");
+	var dayOfWeekChart = dc.rowChart("#day-of-week-chart");
+	var tickersChart = dc.rowChart("#tickers-chart");
+	var yearlyBubbleChart = dc.bubbleChart("#yearly-bubble-chart");
+	var priceChart = dc.compositeChart("#price-chart");
+	var VolumeChart = dc.compositeChart("#Volume-chart");
 </script>
 <div class="clearfix"></div>
 <script src="http://code.jquery.com/jquery-latest.js"></script>
