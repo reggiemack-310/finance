@@ -195,27 +195,18 @@ function setSearchCookie(fromDate, toDate) {
 }
 
 function formatArea() {
-    document.getElementById('download').className = 'button';
-    document.getElementById('download').style.width = '96px';
-    document.getElementById('clear').className = 'button';
-    document.getElementById('clear').style.width = '96px';
-    document.getElementById('fluctuationChart').style.color = 'blue';
-    document.getElementById('dataCount').style.color = '#black';
-    var Texts = ['Date','Ticker','Open','High','Low','Close','Adj Close','Volume', 'download', 'clear', '10', '100', '1000', 'all'];
-    var IDs = ['c1','c2','c3','c4','c5','c6','c7','c8', 'download', 'clear', 'tenRecords', 'hundredRecords', 'thousandRecords', 'allRecords'];
-    for (var i=0; i<Texts.length; i++) {
-    	document.getElementById(IDs[i]).innerHTML = Texts[i];
-    	document.getElementById(IDs[i]).style = ''; }
+    document.getElementById('download').style.display = 'inline-block';
+    document.getElementById('clear').style.display = 'inline-block';
+    var IDs = ['rightColumn', 'download', 'clear', 'Container'];
+    for (var i=0; i<IDs.length; i++) {
+    	document.getElementById(IDs[i]).style.display = 'inline-block';
+        }
     }
 
 function unFormatArea() {
-    document.getElementById('download').className = '';
-    document.getElementById('clear').className = '';
-    document.getElementById('fluctuationChart').style.color = 'white';
-    document.getElementById('dataCount').style.color = 'white';
-    var IDs = ['c1','c2','c3','c4','c5','c6','c7','c8', 'download', 'clear', 'tenRecords', 'hundredRecords', 'thousandRecords', 'allRecords'];
+    var IDs = ['rightColumn', 'download', 'clear', 'Container'];
     for (var i=0; i<IDs.length; i++) {
-    	document.getElementById(IDs[i]).innerHTML = ''; }
+    	document.getElementById(IDs[i]).style.display = 'none'; }
     }
 
 function Clear() {

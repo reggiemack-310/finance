@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>
-    </title>
     <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
     <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
     <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
@@ -11,44 +9,46 @@
     	.changeDown {color: red; display: inline-block; font-size: 10px; width:50px;}
     	.selected {color: blue; display: inline-block; margin-left: 20px; cursor: pointer; cursor: hand; }
     	.notSelected {color: #98abc5; display: inline-block; margin-left: 20px; cursor: pointer; cursor: hand; }
-    	.button {margin: 15px 5px 5px 5px; border:2px solid; border-radius:5px; background-color:#98abc5; color: white; height: 25px; display: inline-block; border: #BBB solid 1px; width: 210px; text-align: center; cursor: pointer; cursor: hand; font-size: 18px; }
+    	.button {line-height: 25px; margin: 15px 5px 5px 5px; border:2px solid; border-radius:5px; background-color:#98abc5; color: white; height: 25px; display: inline-block; border: #BBB solid 1px; width: 200px; text-align: center; cursor: pointer; cursor: hand; font-size: 18px; }
     	.quote {display: inline-block; font-size: 10px; width:50px; }
     	.TBVtickers {margin: 2px 0px 0px 2px; font-size: 10px; text-align: center; color: white; width:50px; background-color: lightGray; display: inline-block; border-radius:3px; cursor: pointer; cursor: hand; }
     	#search {font-size: 10px; text-decoration: underline; color:blue; text-align: left; margin-left: 10px }
     	.scroller {width:200px; overflow:auto; text-align: center;} 
-    	.dates {border-radius:3px; width: 91px; margin-top: -5px; }
+    	.dates {border-radius:3px; width: 93px; margin-top: -5px; }
     	.reset {font-size: 10px;}
     	.onHover, #onHover { cursor: pointer; cursor: hand; }
-
+		.leftColumn { margin: 0px 0px 0px 0px; float: left; padding: 10px 10px 10px 10px; display: inline-block; width: 210px; height: 100%;  }
+		#Container { display: none; width: 550px;  margin-left: -15px; padding: 10px 10px 10px 10px; display: none; position: absolute; left: 260px; height: 100%;}
+		#rightColumn { width: 200px;  margin-left: -15px; padding: 10px 10px 10px 10px; display: none; position: absolute; left: 838px; height: 100%;}
     </style>
+
     <meta http-equiv="content-type" content="text/html; charset=UTF8">
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="css/dc.css"/>
-    <link href='highlighter/shCore.css' rel='stylesheet' type='text/css'/>
-    <link href='highlighter/shThemeDefault.css' rel='stylesheet' type='text/css'/>
-    <script type="text/javascript" src="js/d3.js" charset="utf-8"></script>
-	<script type="text/javascript" src="js/crossfilter.js"></script>
-	<script type="text/javascript" src="js/dc.js"></script>
-	<script type="text/javascript" src="js/vinfin.js"></script>
-	<script type="text/javascript" src="js/vinfinchart.js"></script>
-	<script src='highlighter/shCore.js' type='text/javascript'></script>
-	<script src="highlighter/shAutoloader.js" type="text/javascript"></script>
-	<script src='highlighter/shBrushJScript.js' type='text/javascript'></script>
-	<script src='highlighter/shBrushXml.js' type='text/javascript'></script>
+    <link rel="stylesheet" type="text/css" href="static/css/dc.css"/>
+    <link href='static/css/highlighter/shCore.css' rel='stylesheet' type='text/css'/>
+    <link href='static/css/highlighter/shThemeDefault.css' rel='stylesheet' type='text/css'/>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<script type="text/javascript" src="static/js/crossfilter.js"></script>
+	<script type="text/javascript" src="static/js/dc.js"></script>
+	<script type="text/javascript" src="static/js/vinfin.js"></script>
+	<script type="text/javascript" src="static/js/vinfinchart.js"></script>
+	<script src='static/js/highlighter/shCore.js' type='text/javascript'></script>
+	<script src="static/js/highlighter/shAutoloader.js" type="text/javascript"></script>
+	<script src='static/js/highlighter/shBrushJScript.js' type='text/javascript'></script>
+	<script src='static/js/highlighter/shBrushXml.js' type='text/javascript'></script>
 </head>
 <body>
-<div class="container-fluid">
-	<div class="span3">
+
+<div class="leftColumn">
 		<div onclick="addTicker(document.getElementById('tickers').value, getRecentTickers()); getHistoric(document.getElementById('fromDate').value, document.getElementById('toDate').value, currentTickers, frequency, getRecentTickers())" class="button">search</div>
-		<input type="text" style="margin-left: 5px; width: 200px" placeholder='ticker' id="tickers" onkeydown="if (event.keyCode == 13) addTicker(document.getElementById('tickers').value, recentTickers);"><br>
+		<input type="text" style="margin: 0px 0px 5px 5px; width: 196px" placeholder='ticker' id="tickers" onkeydown="if (event.keyCode == 13) addTicker(document.getElementById('tickers').value, recentTickers);"><br>
 		<input type="text" class="dates" style="margin-left: 5px;" placeholder='from' id="fromDate">
 		<input type="text" class="dates" style="margin-left: 1px;" placeholder='to' id="toDate">
 		<div onclick="updateFrequency(this.id);" id="dailyFreq" >daily</div>
 		<div onclick="updateFrequency(this.id);" id="weeklyFreq" >weekly</div>
-		<div onclick="updateFrequency(this.id);" id="monthlyFreq">monthly</div><br><br>
+		<div onclick="updateFrequency(this.id);" id="monthlyFreq">monthly</div><br>
 		<div id="currentTickers"></div>
-		<div id="download" onclick="javascript:downloadJSON2CSV(data)"></div>
-		<div id="clear" onclick="javascript:Clear()" style="margin-top: -5px"></div><br><br>
+		<div id="download" onclick="javascript:downloadJSON2CSV(data)" class="button" style="display: none; width: 91px;">download</div>
+		<div id="clear" onclick="javascript:Clear()" class="button" style="margin-top: -5px; display: none; width: 91px;">clear</div><br><br>
 			<div id="searchTitle"><div style="text-align:center">
 				search history
 			</div>
@@ -60,80 +60,82 @@
 		</div>
 		<div class="scroller">
 			<div id="quotes" style="height:200px"></div>
+		</div><br><br>
+		<div><div style="text-align:center">
+			note
+		</div>
+			<div style="font-size:10px">
+				Charts leverage <a href="http://d3js.org/" target="_blank">d3</a>, <a href="http://nickqizhu.github.io/dc.js/" target="_blank">Dimensional Charting</a> and Square's <a href="http://square.github.io/crossfilter/" target="_blank">Crossfilter<a/>. Data from <a href="http://.finance.yahoo.com/" target="_blank">Yahoo!</a> finance. Code can be mined from the browser or found on <a href="https://github.com/Vincent-Paver/finance" target="_blank">GitHub</a>. Feel free to drop me a line <a href="https://github.com/Vincent-Paver/finance/issues">here</a> with thoughts, suggestions or (heaven forbid) issues. I hope you enjoy!.
+			</div>
 		</div>
 </div>
-	<div class="span9">
-			<div class="row">
-				<div class="span7">
-					<div id="price-chart">
-				        <span class="reset" style="display: none;">range: <span class="filter"></span></span>
-				        <a class="reset" href="javascript:priceChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-				        <div class="clearfix"></div>
-				    </div>
-					<div id="Volume-chart">
-				        <span class="reset" style="display: none;">range: <span class="filter"></span></span>
-				        <a class="reset" href="javascript:VolumeChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-				        <div class="clearfix"></div>
-				    </div>
 
-			    	<div id="yearly-bubble-chart" class="dc-chart">
-			        	<a class="reset" href="javascript:yearlyBubbleChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-			        	<div class="clearfix"></div>
-			    	</div>
-			    	<div>
-			        	<div class="dc-data-count" id="dataCount" style="color: white; text-align:right"> selected <span class="filter-count"></span> / <span class="total-count"></span> records<br>
-			        		display 
-			            	<div onclick="selectRecords(this.id);" id="tenRecords" class="notSelected"></div>
-			            	<div onclick="selectRecords(this.id);" id="hundredRecords" class="selected"></div>
-			            	<div onclick="selectRecords(this.id);" id="thousandRecords" class="notSelected"></div>
-			            	<div onclick="selectRecords(this.id);" id="allRecords" class="notSelected"></div>
-			        	</div>
-			    	</div>
-			    	<table class="table table-hover dc-data-table" style="width: 500px; margin-left: 50px">
-				        <thead><tr class="header" style="font-size: 10px; font-weight: normal;">
-				            <th id="c1"></th>
-				            <th id="c2"></th>
-				            <th id="c3"></th>
-				            <th id="c4"></th>
-				            <th id="c5"></th>
-				            <th id="c6"></th>
-				            <th id="c7"></th>
-				            <th id="c8"></th>
-        				</tr></thead>
-    				</table>
-						<div id="lists">
-							<div id="flight-list" class="list"></div>
-						</div>
-				</div>
-				<div class="span2">
-					<div id="fluctuation-chart">
-						<a href="javascript:dc.filterAll(); dc.renderAll();" id="fluctuationChart" style="color: white; margin-left: 20px">reset filters</a><br>
-				        <span class="reset" style="display: none;">range: <span class="filter"></span></span>
-				        <a class="reset" href="javascript:fluctuationChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-				        <div class="clearfix"></div>
-				    </div>
-					<div id="tickers-chart">
-				        <span class="reset" style="display: none;">range: <span class="filter"></span></span>
-				        <a class="reset" href="javascript:tickersChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-				        <div class="clearfix"></div>
-				    </div>
-			    	<div id="gain-loss-chart">
-				        <a class="reset" href="javascript:gainOrLossChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-				        <div class="clearfix"></div>
-			    	</div><br>
-				    <div id="quarter-chart">
-				        <a class="reset" href="javascript:quarterChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-				        <div class="clearfix"></div>
-				    </div>
-				    <div id="day-of-week-chart">
-				        <a class="reset" href="javascript:dayOfWeekChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-				        <div class="clearfix"></div>
-				    </div>
-				</div>				
-			</div>
-		</div>	
+<div id="Container">
+	<div id="price-chart">
+		<span class="reset" style="display: none;">range: <span class="filter"></span></span>
+		<a class="reset" href="javascript:priceChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+		<div class="clearfix"></div>
+	</div>
+	<div id="Volume-chart">
+		<span class="reset" style="display: none;">range: <span class="filter"></span></span>
+		<a class="reset" href="javascript:VolumeChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+		<div class="clearfix"></div>
+	</div>
+	<div id="yearly-bubble-chart" class="dc-chart">
+		<a class="reset" href="javascript:yearlyBubbleChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+		<div class="clearfix"></div>
+	</div>
+	<div>
+		<div class="dc-data-count" id="dataCount" style="color: white; text-align:right"> selected <span class="filter-count"></span> / <span class="total-count"></span> records<br>
+			display 
+			<div onclick="selectRecords(this.id);" id="tenRecords" class="notSelected">10</div>
+			<div onclick="selectRecords(this.id);" id="hundredRecords" class="selected">100</div>
+			<div onclick="selectRecords(this.id);" id="thousandRecords" class="notSelected">1000</div>
+			<div onclick="selectRecords(this.id);" id="allRecords" class="notSelected">all</div>
+		</div>
+	</div>
+	<table class="table table-hover dc-data-table" style="width: 500px; margin-left: 50px" id="testTable">
+		<thead><tr style="font-size: 10px; font-weight: normal;">
+			<th>Date</th>
+			<th>Ticker</th>
+			<th>Open</th>
+			<th>High</th>
+			<th>Low</th>
+			<th>Close</th>
+			<th>Adj Close</th>
+			<th>Volume</th>
+		</tr></thead>
+	</table>
+	<div id="lists">
+		<div id="flight-list" class="list"></div>
 	</div>
 </div>
+
+<div id="rightColumn">
+	<div id="fluctuation-chart">
+		<a href="javascript:dc.filterAll(); dc.renderAll();" id="fluctuationChart" style="margin-left: 20px">reset filters</a><br>
+		<span class="reset" style="display: none;">range: <span class="filter"></span></span>
+		<a class="reset" href="javascript:fluctuationChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+		<div class="clearfix"></div>
+	</div>
+	<div id="tickers-chart">
+		<span class="reset" style="display: none;">range: <span class="filter"></span></span>
+		<a class="reset" href="javascript:tickersChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+		<div class="clearfix"></div>
+	</div>
+	<div id="gain-loss-chart">
+		<a class="reset" href="javascript:gainOrLossChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+		<div class="clearfix"></div>
+	</div><br>
+	<div id="quarter-chart">
+		<a class="reset" href="javascript:quarterChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+		<div class="clearfix"></div>
+	</div>
+	<div id="day-of-week-chart">
+		<a class="reset" href="javascript:dayOfWeekChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+		<div class="clearfix"></div>
+	</div>
+</div>				
 
 <script>
 
@@ -187,22 +189,12 @@ $(function() {
 </script>
 <div class="clearfix"></div>
 <script src="http://code.jquery.com/jquery-latest.js"></script>
-<script src="js/bootstrap.min.js"></script>
 <script type="text/javascript">
     SyntaxHighlighter.all();
 </script>
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
 
 
 
